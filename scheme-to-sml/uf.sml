@@ -1,6 +1,6 @@
 (*$UnionFind: UNIONFIND *)
 
-structure UnionFind (* : UNIONFIND *) =
+structure UnionFind: UNIONFIND =
 
 (* UNIONFIND DATA STRUCTURE WITH PATH COMPRESSION AND RANKED UNION
 
@@ -17,10 +17,10 @@ struct
 
   exception UnionFind of string
 
-  datatype 'a UFC = 
+  datatype 'a urefC = 
         ECR of 'a * int
-      | PTR of 'a UF
-  withtype 'a UF = 'a UFC ref
+      | PTR of 'a uref
+  withtype 'a uref = 'a urefC ref
 
   fun find (p as ref (ECR _)) = p
     | find (p as ref (PTR p')) =
@@ -28,7 +28,7 @@ struct
          in (p := PTR p''; p'')
          end
 
-  fun make x = ref (ECR (x, 0))
+  fun uref x = ref (ECR (x, 0))
 
   fun !! p = 
       case !(find p) of
@@ -51,6 +51,25 @@ struct
 	    then ()
          else p' := PTR q
       end
+
+  fun union_with f (p, q) = 
+          let val p' = find p
+              val q' = find q
+          in (case (!p', !q') of
+               (ECR (pc, pr), ECR (qc, qr)) =>
+                  if p' = q' then
+                     p' := ECR (f(pc,pc), pr)
+                  else if pr = qr then 
+                     (q' := ECR (f(pc,qc), qr+1);
+                      p' := PTR q')
+                  else if pr < qr then 
+                     (q' := ECR (f(pc,qc), qr);
+                      p' := PTR q')
+                  else (* pr > qr *)
+                     (p' := ECR (f(pc,qc), pr);
+                      q':= PTR p')
+               | _ => raise UnionFind "union")
+          end
 
   fun union (p, q) = 
           let val p' = find p
