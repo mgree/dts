@@ -1,6 +1,6 @@
-structure SList: LIST =
+(* structure SList: LIST =
   struct
-  open Object Error
+  open Object Error *)
 
   val list = LIST_TAG
   fun length nil = 0
@@ -15,9 +15,9 @@ structure SList: LIST =
   fun sappend nil = LIST_TAG nil
     | sappend [v] = v
     | sappend (v1::vr) = 
-	let fun continue nil = sappend vr
-	      | continue (x1::xr) = PAIR_TAG (x1, continue xr)
-	in continue (LIST_UNTAG v1)
+        let fun continue nil = sappend vr
+              | continue (x1::xr) = PAIR_TAG (x1, continue xr)
+        in continue (LIST_UNTAG v1)
         end
   in
   fun append l = 
@@ -35,16 +35,18 @@ structure SList: LIST =
   fun member (v,nil) = nil
     | member (v, v' as (a::r)) = if is_equal (v, a) then v' else member (v, r)
 
-  exception NotFound
-  fun assq (v, nil) = raise NotFound
-    | assq (v, (a as (a1,a2)) :: b) = if is_eq (v, a1) then a else assq (v, b)
-  fun assv (v, nil) = raise NotFound
-    | assv (v, (a as (a1,a2)) :: b) = if is_eqv (v, a1) then a else assv (v, b)
-  fun assoc (v, nil) = raise NotFound
-    | assoc (v, (a as (a1,a2)) :: b) = if is_equal (v, a1) then a else assoc (v, b)
-
+  fun assq (v, nil) = None
+    | assq (v, (a as (a1,a2)) :: b) = 
+        if is_eq (v, a1) then Some a else assq (v, b)
+  fun assv (v, nil) = None
+    | assv (v, (a as (a1,a2)) :: b) = 
+        if is_eqv (v, a1) then Some a else assv (v, b)
+  fun assoc (v, nil) = None
+    | assoc (v, (a as (a1,a2)) :: b) = 
+        if is_equal (v, a1) then Some a else assoc (v, b)
+(*
   end
-
+*)
 
 
 

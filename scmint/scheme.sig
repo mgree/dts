@@ -1,49 +1,27 @@
-structure Types =
-  struct
+(* open Types
 
-  (* TYPES *)
+signature CONVERSION =
+  sig
 
-  datatype mstring = 
-    FIXED of string |
-    MUTABLE of string ref list
-
-  datatype dynamic =
-      BOOL of boolean | 
-      CHAR of char |
-      STRING of mstring |
-      SYMBOL of symbol |
-      NUMBER of number |
-      VECTOR of vector |
-      PAIR of pair |
-      PROCEDURE of procedure |
-      LIST of plist |
-      INPUT_PORT of input_port |
-      OUTPUT_PORT of output_port |
-      UNSPECIFIED
-  withtype object = dynamic ref
-  and boolean = bool
-  and char = string
-  and symbol = string  
-  and number = int
-  and vector = object Vector.vector
-  and pair = object * object
-  and procedure = object list -> object
-  and plist = object list
-  and input_port = instream
-  and output_port = outstream
-
-  type alist = (object * object) list
-  and complex = int
-  and real = int
-  and rational = int
-  and integer = int
-  and natural = int
-  and radix = int
-  and unspec = unit
+  val object2boolean: object -> boolean
+  val mstring2string: mstring -> string
+  val string2mstring: string -> mstring
+  val vector2list: vector -> plist 
 
   end
 
-open Types
+signature ERROR =
+  sig
+
+  exception Unimplemented of string
+  and Impossible of string
+  and ParseError of string * datum
+  and TypeError of string * object
+  and InputError of string * object
+  and IOError of string * string
+  and EndOfFile
+
+  end
 
 signature OBJECT =
   sig
@@ -97,12 +75,8 @@ signature OBJECT =
   val is_output_port: object -> boolean
   val is_eof_object: object -> boolean
 
-  (* CONVERSIONS *)
-  
-  val object2boolean: object -> boolean
-  val not: object -> boolean
-  val mstring2string: mstring -> string
-  val vector2list: vector -> plist 
+  val not: boolean -> boolean
+  val boolean2str: boolean -> string
 
   (* EQUIVALENCE PREDICATES *)
   
@@ -163,10 +137,9 @@ signature LIST =
   val memq: object * plist -> plist
   and memv: object * plist -> plist
   and member: object * plist -> plist
-  exception NotFound
-  val assq: object * alist -> pair
-  and assv: object * alist -> pair
-  and assoc: object * alist -> pair
+  val assq: object * alist -> pair Option
+  and assv: object * alist -> pair Option
+  and assoc: object * alist -> pair Option
 
   end
 
@@ -251,7 +224,9 @@ signature NUMBER =
   val NATURAL2RADIX: natural -> radix
 
   val number2string: number * radix -> string
-  val string2number: string * radix -> number
+  val string2number: string * radix -> number Option
+  val number2str: number -> string
+  val str2number: string -> number
   end
 
 signature CHAR =
@@ -279,7 +254,8 @@ signature CHAR =
   val integer2char: integer -> char
   val char_upcase: char -> char
   val char_downcase: char -> char
-
+  val str2char: string -> char
+  val char2str: char -> string
   end
 
 signature STRING =
@@ -357,21 +333,17 @@ signature IO =
 
   end
 
-signature ERROR =
+signature ENVIRONMENT =
   sig
+  type env
+ 
+  val empty_env: env
+  val add: env -> string * object -> env
+  val push: env -> (string * object) list -> env
+  val delete: env -> string -> env
 
-  exception Unimplemented of string
-  and Impossible of string
-  and TypeError of string * object
-  and InputError of string * object
-  and IOError of string * string
-  and EndOfFile
-
-  val type_error: string * object -> 'a
-  val input_error: string * object -> 'a
-  val IO_error: string * string -> 'a
-  val unimplemented: string -> 'a
-  val impossible: string -> 'a
+  exception Lookup of string
+  val lookup: env -> string -> object
 
   end
 
@@ -382,97 +354,26 @@ signature BASIS =
 
 signature DATUM =
   sig 
-  
-  datatype datum =
-      BOOLDAT of bool |
-      CHARDAT of string |
-      STRIDAT of string |
-      SYMBDAT of string |
-      NUMBDAT of string |
-      VECTDAT of datum list |
-      PAIRDAT of datum * datum |   
-      NILDAT  
-
-  val read: instream -> datum
-  val write: outstream -> datum -> unit
-
+  val read_datum: instream -> datum
   end
 
 signature COMMAND =
   sig
-      
-  type datum
-
-  datatype expression =
-      LITERAL of datum |
-      VARIABLE of string |
-      CALL of expression * expression list |
-      LAMBDA of formals * (definition list * expression list) |
-      IF of expression * expression * expression |  
-      ASSIGN of (string * expression) |
-      COND of cond_clause_body |
-      CASE of expression * case_clause_body |
-      AND of expression list |	
-      OR of expression list |
-      LET of (string * expression) list * (definition list * expression list) |
-      NAMEDLET of string * (string * expression) list * 
-  		(definition list * expression list) |
-      LETS of (string * expression) list * (definition list * expression list) |
-      LETREC of (string * expression) list * (definition list * expression list) |
-      BEGIN of expression list |
-      DO of (string * expression * expression) list * (expression * 
-  	  	expression list) * expression list |
-      DELAY of expression |
-      QUASIQUOTE of template |
-      UNDEFEXP
-  and cond_clause_body =
-      CONDCLAUSE of cond_clause * cond_clause_body |
-      NULLCOND |
-      CONDDEFAULT of expression list
-  and cond_clause =
-      TESTSEQ of expression * expression list |
-      TEST of expression |
-      TESTREC of expression * expression
-  and case_clause_body = 
-      CASECLAUSE of (datum list * expression list) * case_clause_body |
-      NULLCASE |
-      CASEDEFAULT of expression list 
-  and definition =
-      VARDEF of string * expression |
-      FUNDEF of string * formals * (definition list * expression list) |
-      BEGINDEF of definition list
-  and template =
-      SIMPLETEMP of datum |
-      PAIRTEMP of template_or_splice * template |
-      VECTTEMP of template_or_splice list |
-      UNQUOTE of expression 
-  and template_or_splice =
-      TEMPLATE of template |
-      SPLICE of expression
-  and formals =
-      VARPAR of string |
-      PAIRPAR of string * formals |
-      NULLPAR
-      
-  datatype command =
-      EXP of expression |
-      DEF of definition
-  
-  exception ParseError of string * datum
   val parse: datum -> command
-  val unparse: command -> datum
-
   end
 
 signature EVAL =
   sig
 
-  type command
-
-  val init_env: unit -> unspec
   val eval: command -> object
-  val read_eval_loop: unit -> unspec
+  val run: input_port * output_port -> unspec
   val load: string -> unspec
-  val scheme: unit -> unspec
 
   end
+*)
+
+
+
+
+
+

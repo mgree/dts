@@ -1,6 +1,6 @@
 structure IO: IO =
   struct
-  open Error Object
+  open Conversion Error Object 
 
   val input_port_setting = ref std_in
   val output_port_setting = ref std_out
@@ -43,14 +43,6 @@ structure IO: IO =
     | DotSym
     | SemiColon
     | EndOfInput
-  fun str2number s = string2number (s, 10)
-  fun number2str n = number2string (n, 10)
-  fun char2str "\n" = "#\\newline" |
-      char2str "\t" = "#\\tab" |
-      char2str " " = "#\\space" |
-      char2str c = "#\\" ^ c
-  fun boolean2str true = "#t" |
-      boolean2str false = "#f"
   fun typecase {bool = bool_fcn,
 		symbol = symbol_fcn,
 		char = char_fcn,
@@ -112,7 +104,8 @@ structure IO: IO =
 	  fun get_next_token() =
 	      let val next_char = get_next_char()
 	      in case next_char of
-		  " " => get_next_token()
+		  "" => EndOfInput
+		| " " => get_next_token()
 		| "\t" => get_next_token()
 		| "\n" => get_next_token()
 		| ";" => SemiColon
@@ -128,12 +121,7 @@ structure IO: IO =
 			      "(" => VectorSym
 			    | "t" => BoolSym true
 			    | "f" => BoolSym false
-			    | "\\" => let val c = get_next_char()
-				          val rem_chars = get_identifier()
-				      in if rem_chars = ""
-					     then CharSym c
-					 else read_error "Illegal character constant"
-				      end
+			    | "\\" => CharSym (str2char (get_identifier()))
 			    | c => read_error "Illegal constant")
 		| "+" => if is_token_limit (lookahead ip)
 			     then Identifier (string2symbol "+") 

@@ -1,12 +1,12 @@
-structure Number: NUMBER =
+(* structure Number: NUMBER =
   struct 
-  open Object Error
+  open Object Error *)
   
   fun id x = x
 
-  fun is_complex n = false
-  fun is_real n = false
-  fun is_rational n = false
+  fun is_complex n = true
+  fun is_real n = true
+  fun is_rational n = true
   fun is_integer n = true
 
   fun is_exact n = true
@@ -15,7 +15,7 @@ structure Number: NUMBER =
   fun eq (z1:int, z2, l) = 
       if z1 = z2 
          then let fun eqz nil = true
-	            | eqz (a::b) = (a = z1) andalso eqz b
+                    | eqz (a::b) = (a = z1) andalso eqz b
               in eqz l
               end
       else false
@@ -68,22 +68,22 @@ structure Number: NUMBER =
   end
   fun minus (z1:int, z2) = z1 - z2
   fun divide (n, n') = 
-	n div n' handle _ => raise InputError ("Division by zero", UNSPECIFIED_TAG())
+        n div n' handle _ => raise InputError ("Division by zero", UNSPECIFIED_TAG())
   val abs = (abs: int -> int)
 
   fun quotient (m, n: number) = 
       m div n handle _ => raise InputError ("Division by zero", UNSPECIFIED_TAG())
   fun remainder (m, n: number) = 
       (if (m >= 0 andalso n > 0) orelse (m < 0 andalso n < 0)
-	  then m mod n
+          then m mod n
       else (* (m < 0 andalso n > 0) orelse (m >=0 andalso n < 0) *)
-	  (m mod n) - n) 
+          (m mod n) - n) 
       handle _ =>
-	raise InputError ("Division by zero", UNSPECIFIED_TAG())
+        raise InputError ("Division by zero", UNSPECIFIED_TAG())
   fun modulo (m, n: number) = 
       m mod n 
       handle _ => 
-	raise InputError ("Division by zero", UNSPECIFIED_TAG())
+        raise InputError ("Division by zero", UNSPECIFIED_TAG())
 
   fun gcd nil = 0 |
       gcd [n] = abs n |
@@ -120,7 +120,8 @@ structure Number: NUMBER =
   fun magnitude z = raise Unimplemented "magnitude" 
   fun angle z = raise Unimplemented "angle" 
 
-  val exact2inexact = id
+  fun exact2inexact z = 
+        raise InputError ("Cannot produce inexact numbers", NUMBER_TAG z)
   val inexact2exact = id
 
   fun NATURAL2RADIX 2 = 2
@@ -132,58 +133,70 @@ structure Number: NUMBER =
 
   fun number2string (n: number, b: radix) =
       let fun numb2numblist (n) = 
-	      if n < b then [n] else (n mod b) :: numb2numblist (n div b)
-          fun char 0 = "0" |
-	      char 1 = "1" |
-	      char 2 = "2" |
-	      char 3 = "3" |
-	      char 4 = "4" |
-	      char 5 = "5" |
-	      char 6 = "6" |
-	      char 7 = "7" |
-	      char 8 = "8" |
-	      char 9 = "9" |
-	      char 10 = "a" |
-	      char 11 = "b" |
-	      char 12 = "c" |
-	      char 13 = "d" |
-	      char 14 = "e" |
-	      char 15 = "f" |
-	      char n = raise Impossible "number->string"
+              if n < b then [n] else (n mod b) :: numb2numblist (n div b)
+          fun char 0 = #"0" |
+              char 1 = #"1" |
+              char 2 = #"2" |
+              char 3 = #"3" |
+              char 4 = #"4" |
+              char 5 = #"5" |
+              char 6 = #"6" |
+              char 7 = #"7" |
+              char 8 = #"8" |
+              char 9 = #"9" |
+              char 10 = #"a" |
+              char 11 = #"b" |
+              char 12 = #"c" |
+              char 13 = #"d" |
+              char 14 = #"e" |
+              char 15 = #"f" |
+              char n = raise Impossible "number->string"
       in if n >= 0 
-	    then implode (map char (rev (numb2numblist n)))
-         else implode ("-" :: map char (rev (numb2numblist n)))
+            then implode (map char (rev (numb2numblist n)))
+         else implode (#"-" :: map char (rev (numb2numblist (~n))))
       end
   fun string2number (s: string, b: radix) =
-      let fun ord "0" = 0 |
-	      ord "1" = 1 |
-	      ord "2" = 2 |
-	      ord "3" = 3 |
-	      ord "4" = 4 |
-	      ord "5" = 5 |
-	      ord "6" = 6 |
-	      ord "7" = 7 |
-	      ord "8" = 8 |
-	      ord "9" = 9 |
-	      ord "a" = 10 |
-	      ord "b" = 11 |
-	      ord "c" = 12 |
-	      ord "d" = 13 |
-	      ord "e" = 14 |
-	      ord "f" = 15 |
-	      ord c = raise Impossible "string->number"
-	  fun str2numb (nil, b) = 0 |
-	      str2numb ((c::r), b) = 
-	        let val ordc = ord c 
-		in if ordc < b 
-		       then ordc + b * str2numb (r, b)
-		   else raise InputError ("string->number", STRING_TAG (FIXED s))
-		end
-	  fun str2numb_wp ("#"::"b"::l) = str2numb(l, 2) |
-	      str2numb_wp ("#"::"o"::l) = str2numb(l, 8) |
-	      str2numb_wp ("#"::"d"::l) = str2numb(l, 10) |
-	      str2numb_wp ("#"::"x"::l) = str2numb(l, 16) |
-	      str2numb_wp l = str2numb (l, b)
-      in str2numb_wp (explode s)
+      let exception Fail
+          fun ord #"0" = 0 |
+              ord #"1" = 1 |
+              ord #"2" = 2 |
+              ord #"3" = 3 |
+              ord #"4" = 4 |
+              ord #"5" = 5 |
+              ord #"6" = 6 |
+              ord #"7" = 7 |
+              ord #"8" = 8 |
+              ord #"9" = 9 |
+              ord #"a" = 10 |
+              ord #"b" = 11 |
+              ord #"c" = 12 |
+              ord #"d" = 13 |
+              ord #"e" = 14 |
+              ord #"f" = 15 |
+              ord c = raise Fail
+          fun str2numb (nil, b) = 0 |
+              str2numb ((c::r), b) = 
+                let val ordc = ord c 
+                in if ordc < b 
+                       then ordc + b * str2numb (r, b)
+                   else raise Fail
+                end
+          fun str2numb_s (#"+"::l, n) = str2numb (rev l, n) |
+              str2numb_s (#"-"::l, n) = ~(str2numb (rev l, n)) |
+              str2numb_s (l, n) = str2numb (rev l, n)
+          fun str2numb_wp (#"#"::(#"b"::l)) = str2numb_s(l, 2) |
+              str2numb_wp (#"#"::(#"o"::l)) = str2numb_s(l, 8) |
+              str2numb_wp (#"#"::(#"d"::l)) = str2numb_s(l, 10) |
+              str2numb_wp (#"#"::(#"x"::l)) = str2numb_s(l, 16) |
+              str2numb_wp l = str2numb_s (l, b)
+      in Some (str2numb_wp (explode s)) handle Fail => None
       end
+    fun str2number s = 
+        case string2number (s, 10) of
+          Some n => n
+        | None => raise Impossible "str2number"
+    fun number2str n = number2string (n, 10)
+(*
   end 
+*)
+

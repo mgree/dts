@@ -1,65 +1,6 @@
 structure Command: COMMAND =
-
   struct
-
-  type datum = Datum.datum
-
-  datatype expression =
-      LITERAL of datum |
-      VARIABLE of string |
-      CALL of expression * expression list |
-      LAMBDA of formals * (definition list * expression list) |
-      IF of expression * expression * expression |  
-      ASSIGN of (string * expression) |
-      COND of cond_clause_body |
-      CASE of expression * case_clause_body |
-      AND of expression list |	
-      OR of expression list |
-      LET of (string * expression) list * (definition list * expression list) |
-      NAMEDLET of string * (string * expression) list * 
-  		(definition list * expression list) |
-      LETS of (string * expression) list * (definition list * expression list) |
-      LETREC of (string * expression) list * (definition list * expression list) |
-      BEGIN of expression list |
-      DO of (string * expression * expression) list * (expression * 
-  	  	expression list) * expression list |
-      DELAY of expression |
-      QUASIQUOTE of template |
-      UNDEFEXP
-  and cond_clause_body =
-      CONDCLAUSE of cond_clause * cond_clause_body |
-      NULLCOND |
-      CONDDEFAULT of expression list
-  and cond_clause =
-      TESTSEQ of expression * expression list |
-      TEST of expression |
-      TESTREC of expression * expression
-  and case_clause_body = 
-      CASECLAUSE of (datum list * expression list) * case_clause_body |
-      NULLCASE |
-      CASEDEFAULT of expression list 
-  and definition =
-      VARDEF of string * expression |
-      FUNDEF of string * formals * (definition list * expression list) |
-      BEGINDEF of definition list
-  and template =
-      SIMPLETEMP of datum |
-      PAIRTEMP of template_or_splice * template |
-      VECTTEMP of template_or_splice list |
-      UNQUOTE of expression 
-  and template_or_splice =
-      TEMPLATE of template |
-      SPLICE of expression
-  and formals =
-      VARPAR of string |
-      PAIRPAR of string * formals |
-      NULLPAR
-      
-  datatype command =
-      EXP of expression |
-      DEF of definition
-
-  exception ParseError of string * datum
+  open Datum Error
 
   fun is_keyword "quote" = true
     | is_keyword "lambda" = true
@@ -82,9 +23,6 @@ structure Command: COMMAND =
     | is_keyword "unquote-splicing" = true
     | is_keyword _ = false
 
-  local
-  open Datum
-  in
   fun parse_exp (d as (PAIRDAT (d1, d2))) =
       (case d1 of 
 	SYMBDAT "quote" => parse_quote (d, d2)
@@ -265,8 +203,5 @@ structure Command: COMMAND =
     | parse_template_or_splice N d = TEMPLATE (parse_template (N, d))
 	
   val parse = parse_command
-  end
-
-  fun unparse c = raise General.Unimplemented "Command.unparse"
 
   end

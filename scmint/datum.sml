@@ -2,16 +2,6 @@ structure Datum: DATUM =
   struct
   open Error
 
-  datatype datum =
-      BOOLDAT of bool |
-      CHARDAT of string |
-      STRIDAT of string |
-      SYMBDAT of string |
-      NUMBDAT of string |
-      VECTDAT of datum list |
-      PAIRDAT of datum * datum |   
-      NILDAT  
-
   datatype token =
       Identifier of string
     | BoolSym of bool
@@ -28,7 +18,7 @@ structure Datum: DATUM =
     | DotSym
     | EndOfInput
 
-  fun read ip = 
+  fun read_datum ip = 
       let val read_so_far = ref ""
           fun read_error msg =
               (input_line ip;
@@ -103,12 +93,7 @@ structure Datum: DATUM =
                               "(" => VectorSym
                             | "t" => BoolSym true
                             | "f" => BoolSym false
-                            | "\\" => let val c = get_next_char()
-                                          val rem_chars = get_identifier()
-                                      in if rem_chars = ""
-                                             then CharSym c
-                                         else read_error "Illegal character constant"
-                                      end
+                            | "\\" => CharSym (get_next_char() ^ get_identifier())
                             | c => (Identifier (c ^ get_identifier())))  (* Non-standard identifier *)
                 | "+" => let val lh = lookahead ip in
                              if lh = "." orelse is_digit lh then NumbSym (get_identifier())
@@ -189,7 +174,5 @@ structure Datum: DATUM =
              |    _ => parse_datum(tok) (* before input_line ip *)
          end
       end
-
-  fun write os d = raise Unimplemented "Datum.write" 
 	
   end

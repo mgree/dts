@@ -1,5 +1,6 @@
-  structure Object: OBJECT =
+(*  structure Object: OBJECT =
     struct
+    open Conversion *)
 
     fun BOOL_TAG b = ref (BOOL b)
     fun SYMBOL_TAG s = ref (SYMBOL s)
@@ -19,40 +20,40 @@
     fun OUTPUT_PORT_TAG oport = ref (OUTPUT_PORT oport)
     fun UNSPECIFIED_TAG () = ref UNSPECIFIED
     
-    local open Error 
-    in
+(*    local open Error 
+    in *)
     fun BOOL_UNTAG (ref (BOOL b)) = b |
-        BOOL_UNTAG d = type_error ("boolean", d)
+        BOOL_UNTAG d = raise TypeError ("boolean", d)
     fun SYMBOL_UNTAG (ref (SYMBOL s)) = s |
-        SYMBOL_UNTAG d = type_error ("symbol", d)
+        SYMBOL_UNTAG d = raise TypeError ("symbol", d)
     fun CHAR_UNTAG (ref (CHAR c)) = c |
-        CHAR_UNTAG d = type_error ("character", d)
+        CHAR_UNTAG d = raise TypeError ("character", d)
     fun VECTOR_UNTAG (ref (VECTOR v)) = v |
-        VECTOR_UNTAG d = type_error ("vector", d)
+        VECTOR_UNTAG d = raise TypeError ("vector", d)
     fun PAIR_UNTAG (ref (PAIR p)) = p |
         PAIR_UNTAG (ref (LIST (a::r))) = (a, ref (LIST r)) |
-        PAIR_UNTAG d = type_error ("pair", d)
+        PAIR_UNTAG d = raise TypeError ("pair", d)
     fun NUMBER_UNTAG (ref (NUMBER n)) = n |
-        NUMBER_UNTAG d = type_error ("number", d)
+        NUMBER_UNTAG d = raise TypeError ("number", d)
     val COMPLEX_UNTAG = NUMBER_UNTAG
     val REAL_UNTAG = NUMBER_UNTAG
     val RATIONAL_UNTAG = NUMBER_UNTAG
     val INTEGER_UNTAG = NUMBER_UNTAG
     fun NATURAL_UNTAG (d as (ref (NUMBER n))) =
-	if n < 0 then raise TypeError ("natural", d) else n |
-        NATURAL_UNTAG d = type_error ("natural", d)
+        if n < 0 then raise TypeError ("natural", d) else n |
+        NATURAL_UNTAG d = raise TypeError ("natural", d)
     fun STRING_UNTAG (ref (STRING s)) = s |
-        STRING_UNTAG d = type_error ("string", d)
+        STRING_UNTAG d = raise TypeError ("string", d)
     fun PROCEDURE_UNTAG (ref (PROCEDURE p)) = p |
-        PROCEDURE_UNTAG d = type_error ("procedure", d)
+        PROCEDURE_UNTAG d = raise TypeError ("procedure", d)
     fun LIST_UNTAG (ref (LIST l)) = l |
         LIST_UNTAG (ref (PAIR (l,r))) = l :: LIST_UNTAG r |
-        LIST_UNTAG d = type_error ("list", d)
+        LIST_UNTAG d = raise TypeError ("list", d)
     fun INPUT_PORT_UNTAG (ref (INPUT_PORT iport)) = iport |
-        INPUT_PORT_UNTAG d = type_error ("input port", d)
+        INPUT_PORT_UNTAG d = raise TypeError ("input port", d)
     fun OUTPUT_PORT_UNTAG (ref (OUTPUT_PORT oport)) = oport |
-        OUTPUT_PORT_UNTAG d = type_error ("output port", d)
-    end
+        OUTPUT_PORT_UNTAG d = raise TypeError ("output port", d)
+(*    end *)
   
     (* TYPE TESTING PROCEDURES *)
   
@@ -85,20 +86,10 @@
         is_output_port _ = false
     fun is_eof_object (ref (CHAR "")) = true
       | is_eof_object _ = false
-  
-    fun object2boolean (ref (BOOL b)) = b |
-        object2boolean _ = true
-    fun not (ref (BOOL false)) = true |
-        not _ = false
 
-    fun mstring2string (FIXED s) = s |
-        mstring2string (MUTABLE l) = implode (map ! l)
-    fun vector2list v =
-        let val length = Vector.length v
-	    fun v2l (l, 0) = l
-              | v2l (l, n) = v2l (Vector.sub (v, n-1) :: l, n-1)
-        in v2l (nil, length)
-        end
+    val not = not
+    fun boolean2str true = "#t" |
+        boolean2str false = "#f"
 
     fun is_eq (ref (BOOL b), ref (BOOL b')) = (b = b') |
         is_eq (ref (SYMBOL s), ref (SYMBOL s')) = (s = s') |
@@ -126,9 +117,9 @@
         is_equal (ref (SYMBOL s), ref (SYMBOL s')) = (s = s') |
         is_equal (ref (CHAR c), ref (CHAR c')) = (c = c') |
         is_equal (ref (VECTOR v), ref (VECTOR v')) = 
-	   let fun loop n = if n < 0 then true else 
-		    is_equal (Vector.sub (v, n), Vector.sub(v', n)) andalso loop (n-1)
-	   in if Vector.length v = Vector.length v' 
+           let fun loop n = if n < 0 then true else 
+                    is_equal (Vector.sub (v, n), Vector.sub(v', n)) andalso loop (n-1)
+           in if Vector.length v = Vector.length v' 
                  then loop (Vector.length v)
               else false
            end |
@@ -139,9 +130,9 @@
            (mstring2string s = mstring2string s') |
         is_equal (d as ref (PROCEDURE p), d' as ref (PROCEDURE p')) = (d = d') |
         is_equal (ref (LIST l), ref (LIST l')) = 
-	   let fun list_eq (nil,nil') = true
+           let fun list_eq (nil,nil') = true
                  | list_eq (a::b, a'::b') = is_equal (a,a') andalso list_eq (b,b')
-	         | list_eq _ = false
+                 | list_eq _ = false
            in list_eq (l, l')
            end |
         is_equal (ref (PAIR (l,r)), ref (LIST (l'::r'))) =
@@ -149,5 +140,6 @@
         is_equal (ref (LIST (l::r)), ref (PAIR (l',r'))) =
               is_equal (l,l') andalso is_equal (ref (LIST r), r') |
         is_equal _ = false
-
+(*
     end
+*)

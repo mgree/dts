@@ -1,6 +1,6 @@
-structure Char: CHAR =
+(* structure Char: CHAR =
   struct 
-  open Error
+  open Error Object *)
 
   val unspec_char = "\t"
   val eof_char = ""
@@ -16,19 +16,31 @@ structure Char: CHAR =
   fun char_ci_le (c, c') = raise Unimplemented "ci_le"
   fun char_ci_ge (c, c') = raise Unimplemented "ci_ge"
   fun is_char_alphabetic c = (("a" <= c andalso c <= "z") 
-			      orelse
-  			      ("A" <= c andalso c <= "Z"))
+                              orelse
+                              ("A" <= c andalso c <= "Z"))
   fun is_char_numeric c = ("0" <= c andalso c <= "9")
   fun is_char_whitespace c = (c = "\n" orelse c = "\t" orelse c = " ")
   fun is_char_upper_case c = ("A" <= c andalso c <= "Z")
   fun is_char_lower_case c = ("a" <= c andalso c <= "z")
   val char2integer = ord
   val integer2char = chr
-  fun char_upcase c = if ("a" <= c andalso c <= "z") then
+  (* fun char_upcase c = if ("a" <= c andalso c <= "z") then
                          chr (ord c + ord "A" - ord "a")
-		      else c
+                      else c
   fun char_downcase c = if ("A" <= c andalso c <= "Z") then
                          chr (ord c + ord "a" - ord "A")
-		      else c
-
+                      else c
+  *)
+  fun str2char "newline" = "\n" |
+      str2char "tab" = "\t" |
+      str2char "space" = " " |
+      str2char s = 
+         if size s = 1 then s 
+         else raise InputError ("str2char", STRING_TAG (FIXED s))
+  fun char2str "\n" = "#\\newline" |
+      char2str "\t" = "#\\tab" |
+      char2str " " = "#\\space" |
+      char2str c = "#\\" ^ c
+(*
   end
+*)

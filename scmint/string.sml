@@ -1,14 +1,14 @@
-structure String: STRING =
+(* structure String: STRING =
   struct
-  open Error Object
+  open Error Object *)
+  open List
 
-  fun make_string (k, c: char) = 
-      if k < 0 then 
-	  raise InputError ("make-string", NUMBER_TAG k)
-      else
-	  let fun ms k = if k = 0 then nil else ref c :: ms (k-1) in
-      MUTABLE (ms k)
-      end
+(*  fun make_string (k, c: char) = 
+        (* Assume k >= 0 *)
+        let fun ms k = if k = 0 then nil else ref c :: ms (k-1) 
+        in MUTABLE (ms k)
+        end
+*)
   fun string l = MUTABLE (map ref l)
 
   fun string_length (FIXED s) = length (explode s) |
@@ -16,16 +16,16 @@ structure String: STRING =
   fun string_ref (FIXED s, k) = nth (explode s, k) |
       string_ref (MUTABLE l, k) = 
        !(nth(l,k)) handle Nth => 
-	  raise InputError ("string-ref", NUMBER_TAG k)
+          raise InputError ("string-ref", NUMBER_TAG k)
   fun string_set (s' as (FIXED s), k: number, c: char) = 
           raise InputError ("immutable string in string-set", STRING_TAG s') |
       string_set (MUTABLE l, k, c) = 
           (nth(l,k) := c) handle Nth => 
-	      raise InputError ("negative index in string-set", NUMBER_TAG k)
+              raise InputError ("illegal index in string-set", NUMBER_TAG k)
   fun string_eq (FIXED s, FIXED s') = (s=s') |
       string_eq (MUTABLE nil, MUTABLE nil) = true |
       string_eq (MUTABLE (a::r), MUTABLE (a'::r')) = (!a = !a') andalso
-      		string_eq (MUTABLE r, MUTABLE r') |
+                string_eq (MUTABLE r, MUTABLE r') |
       string_eq (_,_) = false
   fun string_ci_eq (s, s') = raise Unimplemented "string_ci"
   fun string_lt (s, s') = raise Unimplemented "string_lt"
@@ -46,5 +46,6 @@ structure String: STRING =
       string_append [s] = s |
       string_append l = MUTABLE (str_ap l)
   end
-
+(*
   end
+*)
