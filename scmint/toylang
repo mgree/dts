@@ -1,0 +1,148 @@
+From henglein@diku.dk Wed Mar 16 10:40:47 1994
+Received: from embla.diku.dk by odin.diku.dk with SMTP id AA03213
+  (5.65c8/IDA-1.4.4 for <rehof@diku.dk>); Wed, 16 Mar 1994 10:40:44 +0100
+Received: by embla.diku.dk id AA18058
+  (5.65c8/IDA-1.4.4 for rehof@diku.dk); Wed, 16 Mar 1994 10:40:44 +0100
+Date: Wed, 16 Mar 1994 10:40:44 +0100
+From: henglein@diku.dk
+Message-Id: <199403160940.AA18058@embla.diku.dk>
+To: rehof@diku.dk
+In-Reply-To: rehof@diku.dk's message of Wed, 16 Mar 1994 10:11:26 +0100 <199403160911.AA07667@garm.diku.dk>
+Subject: Toy Language
+X-Charset: LATIN1
+X-Char-Esc: 29
+Status: R
+
+Jakob, 
+
+
+     type 'a anncommand_or_definition = 'a anncommand_or_definition
+
+
+      datatype 'a ann_cnst = 
+	       A_BOOLCNST of bool |
+	       A_NUMCNST of int
+
+     datatype 'a ann_expression =
+	       A_CNST of 'a * ('a ann_cnst) |
+	       A_VAR of 'a * string |
+	       A_CALL of 'a * ('a ann_expression) * ('a ann_expression) list |
+	       A_LAMBDA of 'a * ('a ann_formal) * ('a ann_expression) |
+	       A_IF of 'a * ('a ann_expression) * ('a ann_expression) * 
+			    ('a ann_expression) |
+	       A_LET of 'a * ('a ann_bindingspec) list * ('a ann_expression) 
+     and 'a ann_formal = 
+	       A_VARPAR of 'a * string
+     and 'a ann_vardef =
+	       A_VARDEF of 'a * string * ('a ann_expression)
+
+     withtype
+	 'a ann_bindingspec = string * ('a ann_expression) 
+
+     datatype 'a ann_exp_or_definition =
+	       A_DEFINITION of 'a * ('a ann_vardef) |
+	       A_EXP of 'a * ('a ann_expression)
+
+
+   (* --------------------------- *)
+
+
+   Er dette sprog o.k. for dine formaal ?
+
+Hvad med bare
+
+  datatype ('a,'b) exp =
+    VAR of ident |
+    INT of int |
+    BOOL of bool |
+    UNIT |
+    STRING of string |
+    LAMBDA of ident list * ('a,'b) texp |
+    FIX of ident * ident list * ('a,'b) texp |
+    APP of ('a,'b) texp * ((('a,'b) texp) list) |
+    IF of ('a,'b) texp * ('a,'b) texp * ('a,'b) texp |
+    PAIR of ('a, 'b) texp) * ('a, 'b) texp |
+    PRIM of 'b |
+  withtype ('a,'b) texp = 'a * ('a,'b) exp
+
+(Det er faktisk motiveret af definitionen Greg Morisett brugte i hans
+tag3 implementering -- kig i filen texp.sml eller texp.sig hvis du er
+interesseret. Katalog: ~henglein/src/sml/tag3)
+
+Fritz
+
+From henglein@diku.dk Wed Mar 16 11:19:49 1994
+Received: from embla.diku.dk by odin.diku.dk with SMTP id AA04619
+  (5.65c8/IDA-1.4.4 for <rehof@diku.dk>); Wed, 16 Mar 1994 11:19:46 +0100
+Received: by embla.diku.dk id AA20704
+  (5.65c8/IDA-1.4.4 for rehof@diku.dk); Wed, 16 Mar 1994 11:19:45 +0100
+Date: Wed, 16 Mar 1994 11:19:45 +0100
+From: henglein@diku.dk
+Message-Id: <199403161019.AA20704@embla.diku.dk>
+To: rehof@diku.dk
+In-Reply-To: rehof@diku.dk's message of Wed, 16 Mar 1994 10:11:26 +0100 <199403160911.AA07667@garm.diku.dk>
+Subject: Toy Language
+X-Charset: LATIN1
+X-Char-Esc: 29
+Status: R
+
+Jakob, 
+
+jeg vil gerne simplificere sproget paa foelgende maade:
+
+  datatype ('a,'b,'c) exp =
+    VAR of ident |
+    CONST of 'c |
+    LAMBDA of ident * ('a,'b,'c) texp |
+    APP of ('a,'b,'c) texp * ('a,'b,'c) texp) |
+    IF of ('a,'b,'c) texp * ('a,'b,'c) texp * ('a,'b,'c) texp |
+    PRIMAPP of 'b * ('a,'b,'c) texp list |
+  withtype ('a,'b,'c) texp = 'a * ('a,'b,'c) exp
+
+  type ('a,'b,'c) program = (ident * ('a,'b,'c) texp) list
+
+Den konkrete instans vi har brug for er:
+
+  type Primops = PLUS | MINUS | TIMES | EQUAL | GT | LT | OR | AND | NOT 
+  and  Consts = INT of int | BOOL of bool 
+  type Type = ... (specifceret et andet sted)
+  and  Attrib = Type * Type
+	(* first component is "low type", second component is "high
+	type" *)  	
+ 
+  type AExp = (Attrib, Primops, Consts) texp
+  and  AProgram = (Attrib, Primops, Consts) program
+
+Giver det stort besvaer?  I dette tilfaelde er det maaske nemmest at 
+skrive en parser fra bunds (!) -- muligvis med genbrug af kode fra
+Scheme fortolkeren.
+
+Fritz
+
+
+From henglein@diku.dk Wed Mar 16 11:45:11 1994
+Received: from embla.diku.dk by odin.diku.dk with SMTP id AA05499
+  (5.65c8/IDA-1.4.4 for <rehof@diku.dk>); Wed, 16 Mar 1994 11:45:06 +0100
+Received: by embla.diku.dk id AA21905
+  (5.65c8/IDA-1.4.4 for rehof@diku.dk); Wed, 16 Mar 1994 11:45:06 +0100
+Date: Wed, 16 Mar 1994 11:45:06 +0100
+From: henglein@diku.dk
+Message-Id: <199403161045.AA21905@embla.diku.dk>
+To: rehof@diku.dk
+In-Reply-To: rehof@diku.dk's message of Wed, 16 Mar 1994 11:42:38 +0100 <199403161042.AA07896@garm.diku.dk>
+Subject: Toy Language
+X-Charset: LATIN1
+X-Char-Esc: 29
+Status: R
+
+Ja, meningen er at det skulle vaere en raekke af definitioner.  Den
+konkrete syntaks maa gerne vaere identisk med den fra Scheme.  F.x., 
+
+(define f1 (lambda (x) (+ x 1)))
+(define f2 (lambda (x) (lambda (y) (* x y))))
+
+Fritz
+
+
+ 
+
