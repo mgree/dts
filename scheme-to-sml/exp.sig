@@ -1,10 +1,10 @@
 signature KERNELEXP =
   sig
 
-  datatype ('a, 'd, 'e, 'f, 'l, 'v) exp_hom =
+  datatype ('a, 'c, 'd, 'e, 'f, 'l, 'v) exp_hom =
     EHOM of { noexp: 'a -> 'e,
               literal: 'a -> 'd -> 'e,
-              variable: 'a -> 'v -> 'e,
+              variable: 'a -> 'v * 'c -> 'e,
               call: 'a -> 'e * 'l -> 'e,
               lambda: 'a -> 'f * 'e -> 'e,
               ifexp: 'a -> 'e * 'e * 'e -> 'e,
@@ -21,24 +21,24 @@ signature KERNELEXP =
   datatype 'b variable =
     VAR of string * 'b
 
-  datatype ('a, 'b) exp =
+  datatype ('a, 'b, 'c) exp =
     NOEXP |
     LITERAL of 'a anndatum |
-    VARIABLE of 'b variable |
-    CALL of ('a, 'b) annexp * ('a, 'b) annargs |
-    LAMBDA of ('a, 'b) annformals * ('a, 'b) annexp |
-    IF of ('a, 'b) annexp * ('a, 'b) annexp * ('a, 'b) annexp |  
-    ASSIGN of 'b variable * ('a, 'b) annexp
+    VARIABLE of 'b variable * 'c |
+    CALL of ('a, 'b, 'c) annexp * ('a, 'b, 'c) annargs |
+    LAMBDA of ('a, 'b) annformals * ('a, 'b, 'c) annexp |
+    IF of ('a, 'b, 'c) annexp * ('a, 'b, 'c) annexp * ('a, 'b, 'c) annexp |  
+    ASSIGN of 'b variable * ('a, 'b, 'c) annexp
 
-  and ('a, 'b) annexp =
-    EXP of ('a, 'b) exp * 'a
+  and ('a, 'b, 'c) annexp =
+    EXP of ('a, 'b, 'c) exp * 'a
 
-  and ('a, 'b) args =
-    PAIRARG of ('a, 'b) annexp * ('a, 'b) annargs |
+  and ('a, 'b, 'c) args =
+    PAIRARG of ('a, 'b, 'c) annexp * ('a, 'b, 'c) annargs |
     NULLARG 
 
-  and ('a, 'b) annargs =
-    ARGS of ('a, 'b) args * 'a
+  and ('a, 'b, 'c) annargs =
+    ARGS of ('a, 'b, 'c) args * 'a
 
   and ('a, 'b) formals =
     AVARPAR of 'b variable |
@@ -48,16 +48,16 @@ signature KERNELEXP =
   and ('a, 'b) annformals =
     FORMALS of ('a, 'b) formals * 'a
 
-  val apply_ehom: ('a, 'a anndatum, 'e, 'f, 'l, 'b variable) exp_hom -> 
-                  ('a, 'b) annexp -> 'e
+  val apply_ehom: ('a, 'c, 'a anndatum, 'e, 'f, 'l, 'b variable) exp_hom -> 
+                  ('a, 'b, 'c) annexp -> 'e
 
   exception ParseError of string
 
-  val dat2exp: ((unit -> 'a) * (unit -> 'b)) -> 
-                'a anndatum -> ('a, 'b) annexp
+  val dat2exp: ((unit -> 'a) * (string -> 'b) * (unit -> 'c)) -> 
+                'a anndatum -> ('a, 'b, 'c) annexp
 
-  val read_exp: ((unit -> 'a) * (unit -> 'b)) -> instream ->
-                ('a, 'b) annexp
+  val read_exp: ((unit -> 'a) * (string -> 'b) * (unit -> 'c)) -> instream ->
+                ('a, 'b, 'c) annexp
 
   end
 

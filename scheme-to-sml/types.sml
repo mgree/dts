@@ -1,54 +1,80 @@
-structure KernelTypes: KERNELTYPES =
+(*$KernelTypes: SchemeGeneral UnionFind *)
+
+structure KernelTypes (*: KERNELTYPES *) =
   struct
-  local open SchemeGeneral UnionFind
+  local open SchemeGeneral UnionFind 
   in
 
+  (* TYPE TAGS *)
+  
   datatype type_tag = FUNC | BOOL | NIL | PAIR | UNSPEC
-  val type_tags = [FUNC, BOOL, NIL, PAIR, UNSPEC]
 
+  val type_tags = [FUNC, BOOL, NIL, PAIR, UNSPEC]
+  
+
+  (* DYNAMIC TYPES *)
+  
   datatype utype =
-    TVAR of int
-  | SIMPLE of type_tag * atype list
+    SIMPLE of type_tag * atype list   
   | DYN of type_tag -> atype
+  | TVAR of int
+  
   and attributes = 
     ATT of { equivptr: atype Option ref, 
-             preds: atype list ref, succs: atype list ref,
-             pos: bool ref, neg: bool ref, interpreted: bool ref }
-  withtype atype = (utype * attributes) UF
+    	     generic: bool ref,
+             preds: atype list ref, 
+             succs: atype list ref,
+             pos: bool ref, 
+             neg: bool ref, 
+             interpreted: bool ref,
+             instance: atype Option ref, 
+             instantiated: bool ref }
 
+  withtype atype = (utype * attributes) UF
+  
   fun make_attrib () = 
-      ATT { equivptr = ref None,
-            preds = ref nil, succs = ref nil,
-            pos = ref false, neg = ref false, interpreted = ref false }
+      ATT { equivptr = ref None, 
+      	    generic = ref false,
+            preds = ref nil, 
+            succs = ref nil,
+            pos = ref false, 
+            neg = ref false, 
+            interpreted = ref false, 
+            instance = ref None,
+            instantiated = ref false }
 
   (* selection functions *)
   fun utype (aty: atype) = #1 (!!aty)
   fun attributes aty = (case !!aty of (_, ATT atts) => atts)
   fun get f aty = f (attributes aty)
 
-  (* make a new type variable *)
+  (* make new type variables *)
   local 
      val counter = ref 0 
   in
   fun new_typevar () = 
-      (counter := !counter + 1; 
-       make (TVAR (!counter), make_attrib()))
+      make (TVAR (!counter), make_attrib()) before counter := !counter + 1
   end
 
-  (* make a new simple type *)
+  (* make a new simple type *)  
   fun make_type stype = make (SIMPLE stype, make_attrib())
 
-  (* make a new dynamic type *)
-  local 
-  fun make_dyn_function [] = (fn _ => new_typevar())
-    | make_dyn_function (a::r) =
-        (case utype a of
-          SIMPLE (tt, _) => (fn tt' => if tt = tt' then a else make_dyn_function r tt')
-        | _ => raise IllegalInput ("Only simple types allowed in make_dyn_function", ""))
-  in
-  fun make_dyn_type l = make (DYN (make_dyn_function l), make_attrib())
-  end
+  fun error s = raise IllegalInput s
 
+  (* make a new dynamic type *)
+  fun make_dyn_type l = 
+      let fun make_dyn_function [] = (fn _ => new_typevar())
+    	    | make_dyn_function (a::r) =
+      		    (case utype a of
+         		   SIMPLE (tt, _) => 
+         		   	 (fn tt' => if tt = tt' then a else make_dyn_function r tt')
+       			 | _ => error ("make_dyn_function", 
+       			 	           "Only simple types allowed in make_dyn_function"))
+      in make (DYN (make_dyn_function l), make_attrib()) 
+      end
+
+  fun summands f = map f type_tags
+  
   (* find equiv representative of annotated type *)
   fun ecr t =
       let val eqptr = get #equivptr t
@@ -58,10 +84,6 @@ structure KernelTypes: KERNELTYPES =
                       in (eqptr := Some t''; t'')
                       end
       end
-
-  fun zip f ([], []) = ()
-    | zip f (a::r, a'::r') = (f (a, a'); zip f (r, r'))
-    | zip f (_, _) = raise IllegalInput ("Lists of unequal lengths in zip", "")
 
   infix ::= 
 
@@ -78,21 +100,25 @@ structure KernelTypes: KERNELTYPES =
       in (union (t1, t2);
           t2 ::= c2)
       end
-
-  fun equiv (t1, t2) =
+  
+  fun equiv (t1, t2): unit =
       let val t1' = ecr t1
           val t2' = ecr t2
       in if equal(t1', t2')
             then ()
-         else (case (utype t1', utype t2') of
+         else case (utype t1', utype t2') of
                 (DYN f, DYN f') => (union (t1', t2'); 
-                                    zip alias (map f type_tags, map f' type_tags))
-              | (DYN f, SIMPLE (tt, _)) => alias (f tt, t2)
+                                    apply aliassimple (zip (summands f, summands f')))
+              | (DYN f, SIMPLE (tt, _)) => 
+              				(get #equivptr t2' := Some t1';
+              				 aliassimple (f tt, t2))
               | (DYN _, TVAR _) => get #equivptr t2' := Some t1'
-              | (SIMPLE (tt, _), DYN f) => alias (t1, f tt)
+              | (SIMPLE (tt, _), DYN f) => 
+              				(get #equivptr t1' := Some t2';
+              				 aliassimple (t1, f tt))
               | (SIMPLE (tt, _), SIMPLE (tt', _)) => 
                    if tt = tt' then
-                      alias (t1, t2)
+                      aliassimple (t1, t2)
                    else let val rd = make_dyn_type [t1', t2']
                         in (get #equivptr t1' := Some rd;
                             get #equivptr t2' := Some rd)
@@ -100,38 +126,41 @@ structure KernelTypes: KERNELTYPES =
               | (SIMPLE _, TVAR _) => get #equivptr t2' := Some t1'
               | (TVAR _, DYN _) => get #equivptr t1' := Some t2'
               | (TVAR _, SIMPLE _) => get #equivptr t1' := Some t2'
-              | (TVAR _, TVAR _) => get #equivptr t1' := Some t2')
-       end
-  and alias (t1, t2) =
+              | (TVAR _, TVAR _) => get #equivptr t1' := Some t2'
+      end
+  and aliassimple (t1, t2): unit =
       if equal (t1, t2) 
          then ()
-      else ((case (utype t1, utype t2) of
-             (SIMPLE (tt, tlist), SIMPLE (tt', tlist')) =>
-                if tt = tt' then
-                   (union (t1, t2);
-                    zip alias (tlist, tlist'))
-                else raise IllegalInput ("Equiv error: different tags encountered", "")
+      else case (utype t1, utype t2) of
+             (SIMPLE (_, tlist), SIMPLE (_, tlist')) =>
+				(union (t1, t2);
+                 apply aliasvar (zip (tlist, tlist')))
            | (TVAR _, SIMPLE _) => union2 (t1, t2)
            | (SIMPLE _, TVAR _) => union1 (t1, t2)
            | (TVAR _, TVAR _) => union (t1, t2)
-           | (_,_) => raise IllegalInput ("Illegal type aliasing attempted in alias", "") 
-           );
-           equiv (t1, t2))
-
+           | (_,_) => error ("aliassimple", "Illegal type aliasing attempted")
+  and aliasvar (t1, t2): unit =
+  	  if equal (t1, t2)
+  	  	 then ()
+  	  else case (utype t1, utype t2) of
+  	  	     (TVAR _, TVAR _) => (union (t1, t2);
+  	  	     					  equiv (t1, t2))
+  	  	   | (_, _) => error ("aliasvar", "Arguments must be type variables!")
+  	  	   
   fun unify (t1, t2) =
       if equal (t1, t2) 
          then ()
-      else (case (utype t1, utype t2) of
+      else case (utype t1, utype t2) of
               (DYN f, DYN f') => (union (t1, t2); 
-                                  zip unify (map f type_tags, map f' type_tags))
+                                  apply unify (zip (summands f, summands f')))
             | (SIMPLE (tt, tlist), SIMPLE (tt', tlist')) =>
                  if tt = tt' then
-                    (union (t1, t2); zip unify (tlist, tlist'))
-                 else raise IllegalInput ("Functor clash in unify", "")
+                    (union (t1, t2); apply unify (zip (tlist, tlist')))
+                 else error ("Type constructor clash in unify", "")
             | (TVAR _, TVAR _) => union (t1, t2)
             | (TVAR _, _) => union2 (t1, t2)
             | (_, TVAR _) => union1 (t1, t2)
-            | (_, _) => raise IllegalInput ("Dyn and simple types cannot be unified", ""))
+            | (_, _) => error ("Dyn and simple types cannot be unified", "")
 
   fun pred_succ (l,h) =
       if equal (l, h) 
@@ -139,7 +168,7 @@ structure KernelTypes: KERNELTYPES =
       else let val pred_h = get #preds h
                val succ_l = get #succs l
            in (pred_h := l :: (!pred_h);
-             succ_l := h :: (!succ_l))
+               succ_l := h :: (!succ_l))
            end
 
   (* propgate pos/neg attributes through SVFG *)
@@ -157,7 +186,7 @@ structure KernelTypes: KERNELTYPES =
                      propagate (tr::rp, td::ln)
                  | SIMPLE (_, tlist) =>
                      propagate (tlist @  rp, ln)
-                 | DYN _ => raise IllegalInput 
+                 | _ => error 
                    ("Not a variable or simple type in propagate", "pos")))
         end
     | propagate ([], tn::rn) = 
@@ -173,24 +202,22 @@ structure KernelTypes: KERNELTYPES =
                      propagate ([td], tr::rn)
                  | SIMPLE (_, tlist) =>
                      propagate ([], tlist @ rn)
-                 | DYN _ => raise IllegalInput 
+                 |  _ => error 
                    ("Not a variable or simple type in propagate", "neg")))
         end
 
 
-
-  fun foreach f [] = ()
-    | foreach f (a::r) = (f a; foreach f r)
-
-  (* interpret a type after equiv'ing and polarity propagation *)
+ (* interpret a type after equiv'ing and polarity propagation *)
   fun interpret t =
     let val interp = get #interpreted t
     in
-    if !interp then () else
+    if !interp 
+       then () 
+    else
     (get #interpreted t := true;
     case utype t of
-      SIMPLE (tt, tlist) => foreach interpret tlist 
-    | DYN f => foreach interpret (map f type_tags)
+      SIMPLE (tt, tlist) => apply interpret tlist 
+    | DYN f => apply interpret (summands f)
     | TVAR _ => 
        let val tequiv = ecr t
        in
@@ -198,8 +225,8 @@ structure KernelTypes: KERNELTYPES =
          TVAR _ => unify (t, tequiv)
        | SIMPLE _ => let val atts = attributes t
                      in if !(#pos atts) andalso !(#neg atts)
-                           then fold (fn (tpr,()) => 
-                                       case (#1 (!!tpr)) of
+                           then apply (fn tpr => 
+                                       case utype tpr of
                                          TVAR _ => 
                                            let val attstpr = attributes tpr
                                            in if !(#pos attstpr) andalso
@@ -208,15 +235,14 @@ structure KernelTypes: KERNELTYPES =
                                               else ()
                                            end
                                         | SIMPLE _ => ()
-                                        | DYN _ => raise IllegalInput ("Strange stuff", ""))
+                                        | _ => error ("interpret", 
+                                               "Must not be a DYN type"))
                                       (!(#preds atts))
-                                      ()
-                        else unify (t, tequiv)
+                            else unify (t, tequiv)
                      end
        | DYN f => unify (t, tequiv))
        end)
     end
 
+  end
 end
-end
- 

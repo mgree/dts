@@ -1,54 +1,6 @@
-(* $Header: /net/ask/home/ask1/rehof/dynamic/jakob/sys/RCS/general.sml,v 1.12 94/01/20 10:55:58 rehof Exp Locker: rehof $ *)
-
-
-(*$SCHEMEGENERAL *)
-
-signature SCHEMEGENERAL =
-sig
-
-(* GENERAL
-
-Created by: Fritz Henglein, DIKU, University of Copenhagen, henglein@diku.dk
-Date: 04 Sep 1993
-
-Maintenance: Author
-
-DESCRIPTION
-
-General utility types and routines for the Scheme system.  Duplicates some
-of the facilities of the Edinburgh library General 
-
-*)
-
-(* TYPES *)
-
-datatype 'a Option = None | Some of 'a
-datatype ('a, 'b) Result = OK of 'a | Fail of 'b
-type natural sharing type natural = int
-
-(* EXCEPTIONS *)
-
-exception Unimplemented of string 
-     (* argument: name of unimplemented function *)
-exception IllegalInput of string * string
-     (* argument: (error message, offending argument as a string) *)
-exception EOF
-     (* Raised on seeing a legal end-of-input *)
-exception EXIT
-     (* Raised on executing library function exit *)
-
-
-(* UTILITIES *)
-
-val foldappend: 'a list list -> 'a list
-val member: ''a -> ''a list -> bool
-end
-
-
-
 (*$SchemeGeneral: SCHEMEGENERAL *)
 
-structure SchemeGeneral: SCHEMEGENERAL = 
+structure SchemeGeneral (*: SCHEMEGENERAL *) = 
   struct
 
   datatype 'a Option = None | Some of 'a
@@ -60,12 +12,17 @@ structure SchemeGeneral: SCHEMEGENERAL =
   exception EOF
   exception EXIT
 
+  fun apply f [] = ()
+    | apply f (a::r) = (f a; apply f r)
+
+  fun zip ([], []) = []
+    | zip (a::r, a'::r') = (a,a')::zip (r,r')
+    | zip (_, _) = raise IllegalInput ("zip", "lists of different lengths")
+
   fun foldappend ls = fold op@ ls nil
 
-  fun member x y =  case y of
-                         [] => false
-                    |    (y'::tl) =>  if x=y' then true else (member x tl)
-
+  fun member x [] = false
+    | member x (y::tl) = if x=y then true else (member x tl)
 
   end
 

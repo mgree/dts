@@ -1,145 +1,128 @@
-structure KernelExp: KERNELEXP =
+structure KernelExp (*: KERNELEXP *) =
   struct 
   local open SchemeDatum 
   in
 
-  datatype ('a, 'd, 'e, 'f, 'l, 'v) exp_hom =
-    EHOM of { noexp: 'a -> 'e,
-              literal: 'a -> 'd -> 'e,
-              variable: 'a -> 'v -> 'e,
-              call: 'a -> 'e * 'l -> 'e,
-              lambda: 'a -> 'f * 'e -> 'e,
-              ifexp: 'a -> 'e * 'e * 'e -> 'e,
-              assign: 'a -> 'v * 'e -> 'e,
-              pairarg: 'a -> 'e * 'l -> 'l,
-              nullarg: 'a -> 'l,
-              avarpar: 'a -> 'v -> 'f,
-              apairpar: 'a -> 'v * 'f -> 'f,
-              anullpar: 'a -> 'f
-            }
+  datatype ('e, 'ea, 'd, 'v, 'l, 'f) exp_hom =
+    EHOM of { noexp: 'ea -> 'e,
+              literal: 'ea * 'd -> 'e,
+              variable: 'ea * 'v -> 'e,
+              call: 'ea * 'e * 'l -> 'e,
+              lambda: 'ea * 'f * 'e -> 'e,
+              ifexp: 'ea * 'e * 'e * 'e -> 'e,
+              assign: 'ea * 'v * 'e -> 'e }
 
-  type 'a anndatum = 'a anndatum
+  datatype ('l, 'la, 'e) arg_hom =
+    LHOM of { pairarg: 'la * 'e * 'l -> 'l,
+              nullarg: 'la -> 'l }
 
-  datatype 'b variable =
-    VAR of string * 'b
+  datatype ('f, 'fa, 'p) form_hom =
+    FHOM of { avarpar: 'fa * 'p -> 'f,
+              apairpar: 'fa * 'p * 'f -> 'f,
+              anullpar: 'fa -> 'f }
 
-  datatype ('a, 'b) exp =
-    NOEXP |
-    LITERAL of 'a anndatum |
-    VARIABLE of 'b variable |
-    CALL of ('a, 'b) annexp * ('a, 'b) annargs |
-    LAMBDA of ('a, 'b) annformals * ('a, 'b) annexp |
-    IF of ('a, 'b) annexp * ('a, 'b) annexp * ('a, 'b) annexp |  
-    ASSIGN of 'b variable * ('a, 'b) annexp
+  datatype ('d, 'v, 'p, 'e, 'l, 'f) exp =
+    NOEXP of 'e |
+    LITERAL of 'e * 'd |
+    VARIABLE of 'e * 'v |
+    CALL of 'e * ('d, 'v, 'p, 'e, 'l, 'f) exp * ('d, 'v, 'p, 'e, 'l, 'f) args |
+    LAMBDA of 'e * ('f, 'p) formals * ('d, 'v, 'p, 'e, 'l, 'f) exp |
+    IF of 'e * ('d, 'v, 'p, 'e, 'l, 'f) exp * ('d, 'v, 'p, 'e, 'l, 'f) exp * 
+          ('d, 'v, 'p, 'e, 'l, 'f) exp |  
+    ASSIGN of 'e * 'v * ('d, 'v, 'p, 'e, 'l, 'f) exp
+  and ('d, 'v, 'p, 'e, 'l, 'f) args =
+    PAIRARG of 'l * ('d, 'v, 'p, 'e, 'l, 'f) exp * ('d, 'v, 'p, 'e, 'l, 'f) args |
+    NULLARG of 'l
 
-  and ('a, 'b) annexp =
-    EXP of ('a, 'b) exp * 'a
+  and ('f, 'p) formals =
+    AVARPAR of 'f * 'p |
+    APAIRPAR of 'f * 'p * ('f, 'p) formals |
+    ANULLPAR of 'f
 
-  and ('a, 'b) args =
-    PAIRARG of ('a, 'b) annexp * ('a, 'b) annargs |
-    NULLARG 
-
-  and ('a, 'b) annargs =
-    ARGS of ('a, 'b) args * 'a
-
-  and ('a, 'b) formals =
-    AVARPAR of 'b variable |
-    APAIRPAR of 'b variable * ('a, 'b) annformals |
-    ANULLPAR
-
-  and ('a, 'b) annformals =
-    FORMALS of ('a, 'b) formals * 'a
-
-  fun apply_ehom (EHOM H: ('a, 'a anndatum, 'e, 'f, 'l, 'b variable) exp_hom) 
-  		 (e: ('a, 'b) annexp): 'e =
-      let fun eapply (EXP (e, a)) =
-              case e of
-	        NOEXP => #noexp H a
-              | LITERAL ad => #literal H a ad
-              | VARIABLE v => #variable H a v
-              | CALL (e, l) => #call H a (eapply e, aapply l)
-              | LAMBDA (f, e) => #lambda H a (fapply f, eapply e)
-              | IF (e1, e2, e3) => 
-	      	  #ifexp H a (eapply e1, eapply e2, eapply e3)
-              | ASSIGN (v, e) => #assign H a (v, eapply e)
-          and aapply (ARGS (l, a)) =
-	      case l of
-	        PAIRARG (e, l') => #pairarg H a (eapply e, aapply l')
-              | NULLARG => #nullarg H a
-          and fapply (FORMALS (f, a)) =
-	      case f of
-	        AVARPAR v => #avarpar H a v
-	      | APAIRPAR (v, f') => #apairpar H a (v, fapply f')
-	      | ANULLPAR => #anullpar H a
-       in eapply e
-       end
-
-  exception ParseError of string
-
-  fun dat2exp (ainit: unit -> 'a, vinit: unit -> 'b) (d: 'a anndatum): 
-  	('a, 'b) annexp =
-      let fun make_exp EC x = EXP (EC x, ainit())
-          fun make_noexp () = EXP (NOEXP, ainit())
-          fun make_pairarg x = ARGS (PAIRARG x, ainit())
-	  fun make_nullarg () = ARGS (NULLARG, ainit())
-	  fun make_formals FC x = FORMALS (FC x, ainit())
-	  fun make_nullpar () = FORMALS (ANULLPAR, ainit())
-	  fun make_var s = VAR (s, vinit ())
-          fun dat2e (ad as DATUM (d, a)) =
-	      case d of
-	        PAIRDAT (d1 as DATUM (d', a'), d2) =>
-		  (case d' of
-		    SYMBDAT "lambda" => dat2lambda d2
-		  | SYMBDAT "if" => dat2if d2
-		  | SYMBDAT "set!" => dat2assign d2
-		  | SYMBDAT "quote" => dat2quote d2
-		  | _ => make_exp CALL (dat2e d1, dat2args d2))
-	      | SYMBDAT s => make_exp VARIABLE (make_var s)
-	      | _ => make_exp LITERAL ad
-	  and dat2lambda (DATUM (PAIRDAT (f, DATUM (PAIRDAT (e, 
-	  		  DATUM (NILDAT, _)), _)), _)) =
-		make_exp LAMBDA (dat2formals f, dat2e e)
-	    | dat2lambda _ = raise ParseError ("Illegal lambda expression")
-	  and dat2formals (DATUM (SYMBDAT s, _)) =
-		make_formals AVARPAR (make_var s)
-	    | dat2formals (DATUM (PAIRDAT (d1, d2), _)) = 
-	        make_formals APAIRPAR (dat2var d1, dat2formals d2)
-	    | dat2formals (DATUM (NILDAT, _)) = make_nullpar ()
-	    | dat2formals _ = raise ParseError ("Illegal formals")
-	  and dat2var (DATUM (SYMBDAT s, _)) = 
-	  	(case s of
-		  "lambda" => raise ParseError ("Illegal variable (lambda)")
-		| "if" => raise ParseError ("Illegal variable (if)")
-		| "set!" => raise ParseError ("Illegal variable (set!)")
-		| _ => make_var s)
-	    | dat2var _ = raise ParseError 
-	    			("Illegal variable (not an identifier)")
-          and dat2if (DATUM (PAIRDAT (d1, DATUM (PAIRDAT (d2, d3), _)), _)) =
-                make_exp IF (dat2e d1, dat2e d2, dat2else d3)
-	    | dat2if _ = raise ParseError ("Illegal if expression")
-	  and dat2else (DATUM (PAIRDAT (d, DATUM (NILDAT, _)), _)) = dat2e d
-	    | dat2else (DATUM (NILDAT, _)) = make_noexp ()
-	    | dat2else _ = raise ParseError ("Illegal if expression (else)")
-	  and dat2assign (DATUM (PAIRDAT (d1, DATUM (PAIRDAT (d2,
-	  		  DATUM (NILDAT, _)), _)), _)) =
-	        make_exp ASSIGN (dat2var d1, dat2e d2)
-            | dat2assign _ = raise ParseError ("Illegal assignment")
-          and dat2quote (DATUM (PAIRDAT (d1, DATUM (NILDAT, _)), _)) =
-	       make_exp LITERAL d1
-	    | dat2quote _ = raise ParseError ("Illegal quotation")
-	  and dat2args (DATUM (PAIRDAT (d1, d2), _)) =
-                make_pairarg (dat2e d1, dat2args d2)
-            | dat2args (DATUM (NILDAT, _)) = make_nullarg ()
-	    | dat2args _ = raise ParseError ("Illegal argument list")
-      in
-      dat2e d
+  fun apply_fhom (FHOM F) = 
+    let fun fapply (AVARPAR a) = #avarpar F a
+              | fapply (APAIRPAR (a, v, f')) = #apairpar F (a, v, fapply f')
+              | fapply (ANULLPAR a) = #anullpar F a 
+        in fapply
+        end
+          
+  fun apply_ehom (D,  EHOM E, LHOM L, F) =
+      let fun eapply (NOEXP a) = #noexp E a
+                | eapply (LITERAL (a,d)) = #literal E (a, apply_dhom D d)
+                | eapply (VARIABLE v) = #variable E v 
+            | eapply (CALL (a, e, l)) = #call E (a, eapply e, lapply l)
+                | eapply (LAMBDA (a, f, e)) = #lambda E (a, apply_fhom F f, eapply e)
+                | eapply (IF (a, e1, e2, e3)) = #ifexp E (a, eapply e1, eapply e2, eapply e3)
+                | eapply (ASSIGN (a, v, e)) = #assign E (a, v, eapply e)
+          and lapply (PAIRARG (a, e, l')) = #pairarg L (a, eapply e, lapply l')
+                | lapply (NULLARG a) = #nullarg L a 
+      in eapply
       end
 
-  fun read_exp (ainit: unit -> 'a, vinit: unit -> 'b) (ip: instream):
-   	          ('a, 'b) annexp =
-      dat2exp (ainit, vinit) (read_datum ainit ip)
+  datatype ('e, 'l, 'f, 'p, 'v) attinit =
+      INIT of { parameter: string -> 'p,
+                    variable: string -> 'v,
+                    exp: unit -> 'e,
+                    args: unit -> 'l,
+                    formals: unit -> 'f }
+                    
+  exception ParseError of string
+  
+  val keywords = ["lambda", "if", "set!", "quote"]
+        
+  fun dat2exp (INIT I) =
+      let fun dat2e (PAIRDAT (a,d1,d2)) =
+                             (case d1 of
+                           SYMBDAT (a', "lambda") => dat2lambda (a,d2)
+                             | SYMBDAT (a', "if") => dat2if (a,d2)
+                             | SYMBDAT (a', "set!") => dat2assign (a,d2)
+                                 | SYMBDAT (a', "quote") => dat2quote (a,d2)
+                                 | _ => CALL (#exp I a, dat2e d1, dat2args d2))
+                | dat2e (SYMBDAT (a,s)) = VARIABLE (#exp I a, #variable I s)
+                | dat2e d = LITERAL (#exp I (dattrib d), d)
+              and dat2lambda (al, (PAIRDAT (a, f, (PAIRDAT (a', e, NILDAT a''))))) =
+                          LAMBDA (#exp I a, dat2formals f, dat2e e)
+                | dat2lambda _ = raise ParseError ("Illegal lambda expression")
+                  and dat2formals (SYMBDAT (a,s)) =
+                          AVARPAR (#formals I a, #parameter I s)
+                | dat2formals (PAIRDAT (a,d1,d2)) = 
+                          APAIRPAR (#formals I a, dat2par d1, dat2formals d2)
+                    | dat2formals (NILDAT a) = ANULLPAR (#formals I a)
+                | dat2formals _ = raise ParseError ("Illegal formals")
+                  and dat2par (SYMBDAT (a,s)) = 
+                            if member s keywords
+                               then raise ParseError ("Illegal parameter (keyword) ")
+                            else #parameter I s
+                    | dat2par _ = raise ParseError ("Illegal parameter (not an identifier)")
+          and dat2if (ai, (PAIRDAT (a, d1, PAIRDAT (a', d2, d3)))) =
+                IF (#exp I ai, dat2e d1, dat2e d2, dat2else d3)
+                | dat2if _ = raise ParseError ("Illegal if expression")
+                  and dat2else (PAIRDAT (_, d, NILDAT _)) = dat2e d
+                | dat2else (NILDAT a) = NOEXP (#exp I a)
+                    | dat2else _ = raise ParseError ("Illegal if expression (else)")
+                  and dat2assign (aa, (PAIRDAT (a,d1, PAIRDAT (a',d2, NILDAT a'')))) =
+                         ASSIGN (#exp I aa, dat2var d1, dat2e d2)
+            | dat2assign _ = raise ParseError ("Illegal assignment")
+          and dat2quote (aq, PAIRDAT (a1,d1, NILDAT _)) =
+                     LITERAL (#exp I aq, d1)
+                | dat2quote _ = raise ParseError ("Illegal quotation")
+                  and dat2var (SYMBDAT (a,s)) = 
+                if member s keywords 
+                   then ParseError ("Illegal variable (keyword)")
+                else #variable I s
+                    | dat2var _ = raise ParseError ("Illegal variable (not an identifier)")
+                  and dat2args (PAIRDAT (a, d1, d2)) =
+                PAIRARG (#args I a, dat2e d1, dat2args d2)
+            | dat2args (NILDAT a) = NULLARG (#args I a)
+                | dat2args _ = raise ParseError ("Illegal argument list")
+      in
+      dat2e
+      end
+
+  fun dinit (INIT {exp = x, ...}) = x
+  
+  fun read_exp I ip = dat2exp I (read_datum (dinit I) ip)
 
   end
 end
-
 

@@ -1,17 +1,25 @@
 (* Build system *)
 
+use "general.sig";
 use "general.sml"; 
+open SchemeGeneral;
 use "uf.sig";      
-use "uf.sml";      
+use "uf.sml"; 
+open UnionFind;     
 use "datum.sig";
 use "datum.sml";
+open SchemeDatum;
 use "exp.sig";
 use "exp.sml";
+open KernelExp;
 use "types.sig";
 use "types.sml";
+open KernelTypes;
 use "constraints.sig";
 use "constraints.sml";
+open KernelConstraints;
 use "process.sml";
+open KernelProcess;
 
 open SchemeDatum KernelExp KernelTypes KernelConstraints
 

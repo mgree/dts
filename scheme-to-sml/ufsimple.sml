@@ -1,6 +1,6 @@
 (*$UnionFind: UNIONFIND *)
 
-structure UnionFind: UNIONFIND =
+structure SimpleUnionFind: UNIONFIND =
 
 (* UNIONFIND DATA STRUCTURE WITH PATH COMPRESSION
 

@@ -1,43 +1,50 @@
-structure SchemeDatum: SCHEMEDATUM =
+structure SchemeDatum (*: SCHEMEDATUM *) =
   struct
 
-  datatype ('a, 'd) datum_hom =
-      DHOM of { booldat: 'a -> bool -> 'd,
-                chardat: 'a -> string -> 'd,
-                stridat: 'a -> string -> 'd,
-                symbdat: 'a -> string -> 'd,
-                numbdat: 'a -> string -> 'd,
-                vectdat: 'a -> 'd list -> 'd,
-                pairdat: 'a -> 'd * 'd -> 'd,
-                nildat: 'a -> 'd 
+  datatype ('da, 'd) datum_hom =
+      DHOM of { booldat: 'da * bool -> 'd,
+                chardat: 'da * string -> 'd,
+                stridat: 'da * string -> 'd,
+                symbdat: 'da * string -> 'd,
+                numbdat: 'da * string -> 'd,
+                vectdat: 'da * 'd list -> 'd,
+                pairdat: 'da * 'd * 'd -> 'd,
+                nildat: 'da -> 'd 
               }
 
   datatype 'a datum =
-      BOOLDAT of bool |
-      CHARDAT of string |
-      STRIDAT of string |
-      SYMBDAT of string |
-      NUMBDAT of string |
-      VECTDAT of 'a anndatum list |
-      PAIRDAT of 'a anndatum * 'a anndatum |   
-      NILDAT
+      BOOLDAT of 'a * bool |
+      CHARDAT of 'a * string |
+      STRIDAT of 'a * string |
+      SYMBDAT of 'a * string |
+      NUMBDAT of 'a * string |
+      VECTDAT of 'a * 'a datum list |
+      PAIRDAT of 'a * 'a datum * 'a datum |   
+      NILDAT of 'a
 
-  and 'a anndatum =
-      DATUM of 'a datum * 'a
-
-  fun apply_dhom (DHOM H: ('a, 'd) datum_hom) (d: 'a anndatum): 'd = 
-      let fun apply (DATUM (d,a): 'a anndatum) =
-              case d of
-                BOOLDAT b => #booldat H a b
-              | CHARDAT c => #chardat H a c
-              | STRIDAT s => #stridat H a s
-              | SYMBDAT s => #symbdat H a s
-              | NUMBDAT s => #numbdat H a s
-              | VECTDAT dl => #vectdat H a (map apply dl)
-              | PAIRDAT (d1, d2) => #pairdat H a (apply d1, apply d2)
-              | NILDAT => #nildat H a
-      in apply d
+  fun dattrib (BOOLDAT (a,_)) = a
+    | dattrib (CHARDAT (a,_)) = a
+    | dattrib (STRIDAT (a,_)) = a
+    | dattrib (SYMBDAT (a,_)) = a
+    | dattrib (NUMBDAT (a,_)) = a
+    | dattrib (VECTDAT (a,_)) = a
+    | dattrib (PAIRDAT (a,_,_)) = a
+    | dattrib (NILDAT a) = a
+   
+  fun apply_dhom (DHOM D) = 
+      let fun dapply (BOOLDAT x) = #booldat D x
+            | dapply (CHARDAT x) = #chardat D x
+            | dapply (STRIDAT x) = #stridat D x
+            | dapply (SYMBDAT x) = #symbdat D x
+            | dapply (NUMBDAT x) = #numbdat D x
+            | dapply (VECTDAT (a,dl)) = #vectdat D (a, map dapply dl)
+            | dapply (PAIRDAT (a, d1, d2)) = 
+                        #pairdat D (a, dapply d1, dapply d2)
+            | dapply (NILDAT a) = #nildat D a 
+      in dapply 
       end
+
+  
 
   datatype token =
       Identifier of string
@@ -161,12 +168,10 @@ structure SchemeDatum: SCHEMEDATUM =
                 | c => Identifier (c ^ get_identifier())
               end
  
-          fun make_datum DC x = DATUM (DC x, init())
-          fun make_nil () = DATUM (NILDAT, init())
+          fun listdat [] = NILDAT (init())
+            | listdat (d::r) = PAIRDAT (init(), d, listdat r)
 
-          fun listdat [] = make_nil ()
-            | listdat (a::r) = make_datum PAIRDAT (a, listdat r)
-
+          fun make_datum DC s = DC (init(), s)
           fun parse_datum(tok) =
               (* parses the input stream with tok prepended as the 
                first token *)
@@ -177,7 +182,7 @@ structure SchemeDatum: SCHEMEDATUM =
                 | CharSym c => make_datum CHARDAT c
                 | QuotationMark => make_datum STRIDAT (get_string())
                 | LeftParen => parse_list()
-                | VectorSym => make_datum VECTDAT (parse_vector())
+                | VectorSym => VECTDAT (init(), parse_vector())
                 | QuoteSym => 
                       listdat [make_datum SYMBDAT "quote", 
                                parse_datum (get_next_token())]
@@ -194,19 +199,19 @@ structure SchemeDatum: SCHEMEDATUM =
           and parse_list() =
               let val tok = get_next_token()
               in if tok = RightParen 
-                    then make_nil ()
-                 else make_datum PAIRDAT (parse_datum(tok), parse_list_rem())
+                    then NILDAT (init())
+                 else PAIRDAT (init(), parse_datum(tok), parse_list_rem())
               end
           and parse_list_rem() =
               let val tok = get_next_token()
               in case tok of
-                  RightParen => make_nil ()
+                  RightParen => NILDAT (init())
                 | DotSym => let val pd = parse_datum(get_next_token())
                             in if get_next_token() = RightParen
                                    then pd
                                else read_error "Illegal input: ) expected"
                             end
-                | _ => make_datum PAIRDAT (parse_datum(tok), parse_list_rem())
+                | _ => PAIRDAT (init(),parse_datum(tok), parse_list_rem())
               end
           and parse_vector() =
               let val tok = get_next_token()

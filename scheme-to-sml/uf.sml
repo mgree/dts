@@ -37,13 +37,12 @@ struct
       
   fun equal (p, p') = (find p = find p')
 
-  fun ::= (p, x) = 
+  fun op::= (p, x) = 
       let val p' = find p
       in case !p' of
            ECR (_, r) => (p' := ECR (x, r))
          | _ => raise UnionFind "::="
       end
-  infix ::=  
 
   fun union (p, q) = 
           let val p' = find p
