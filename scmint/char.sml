@@ -1,6 +1,4 @@
-(*$SCHEMECHAR *)
-
-signature SCHEMECHAR =
+signature CHARACTER =
 sig
 
 (* CHARS
@@ -18,26 +16,23 @@ Standard procedures for Scheme type "character".
 
 (* TYPES *)
 
+type T
 type char
-type integer
-sharing type integer = int and type char = string
+sharing type char = T
 
-(* NOTE: sharing char and string is too strong.  This is here to enable 
-sharing of char with one-character SML strings, used in the implementation
-of Scheme strings *)
 
 (* STANDARD PROCEDURES *)
 
-val char_eq: char * char -> bool
-val char_lt: char * char -> bool
-val char_gt: char * char -> bool
-val char_le: char * char -> bool
-val char_ge: char * char -> bool
-val char_ci_eq: char * char -> bool
-val char_ci_lt: char * char -> bool
-val char_ci_gt: char * char -> bool
-val char_ci_le: char * char -> bool
-val char_ci_ge: char * char -> bool
+val eq: char * char -> bool
+val lt: char * char -> bool
+val gt: char * char -> bool
+val le: char * char -> bool
+val ge: char * char -> bool
+val ci_eq: char * char -> bool
+val ci_lt: char * char -> bool
+val ci_gt: char * char -> bool
+val ci_le: char * char -> bool
+val ci_ge: char * char -> bool
 val is_char_alphabetic: char -> bool
 val is_char_numeric: char -> bool
 val is_char_whitespace: char -> bool
@@ -50,6 +45,8 @@ val char_downcase: char -> char
 
 val char2integer: char -> integer
 val integer2char: integer -> char
+val str2char: string -> char
+val char2str: char -> string
 
 (* INPUT/OUTPUT *)
 
@@ -58,31 +55,28 @@ val read: instream -> char
 val print: outstream -> char -> unit
 *)
 
-val str2char: string -> char
-val char2str: char -> string
-
 end
 
 
 (*$SchemeChar: SCHEMECHAR SchemeGeneral  *)
 
-structure SchemeChar: SCHEMECHAR =
+structure Character: CHARACTER =
   struct 
-  local open SchemeGeneral in
+  open General
 
   type char = string
   type integer = int
 
-  fun char_eq (c: char, c') = (c=c') 
-  fun char_lt (c: char, c') = (c < c')
-  fun char_gt (c: char, c') = (c > c')
-  fun char_le (c: char, c') = (c <= c')
-  fun char_ge (c: char, c') = (c >= c')
-  fun char_ci_eq (c, c') = raise Unimplemented "char_ci_eq"
-  fun char_ci_lt (c, c') = raise Unimplemented "char_ci_lt"
-  fun char_ci_gt (c, c') = raise Unimplemented "char_ci_gt"
-  fun char_ci_le (c, c') = raise Unimplemented "char_ci_le"
-  fun char_ci_ge (c, c') = raise Unimplemented "char_ci_ge"
+  fun eq (c: char, c') = (c=c') 
+  fun lt (c: char, c') = (c < c')
+  fun gt (c: char, c') = (c > c')
+  fun le (c: char, c') = (c <= c')
+  fun ge (c: char, c') = (c >= c')
+  fun ci_eq (c, c') = raise Unimplemented "ci_eq"
+  fun ci_lt (c, c') = raise Unimplemented "ci_lt"
+  fun ci_gt (c, c') = raise Unimplemented "ci_gt"
+  fun ci_le (c, c') = raise Unimplemented "ci_le"
+  fun ci_ge (c, c') = raise Unimplemented "ci_ge"
   fun is_char_alphabetic c = (("a" <= c andalso c <= "z") 
 			      orelse
   			      ("A" <= c andalso c <= "Z"))
@@ -109,5 +103,4 @@ structure SchemeChar: SCHEMECHAR =
       char2str " " = "#\\space" |
       char2str c = "#\\" ^ c
 
-  end
   end

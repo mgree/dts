@@ -1,6 +1,6 @@
 (*$SCHEMEINPUTOUTPUT *)
 
-signature SCHEMEINPUTOUTPUT =
+signature INPUTOUTPUT =
 sig
 
 (* INPUT/OUTPUT
@@ -71,9 +71,9 @@ end
 (*$SchemeInputOutput: SCHEMEINPUTOUTPUT SchemeGeneral
               SchemeChar SchemeString SchemeProcedure *)
 
-structure SchemeInputOutput: SCHEMEINPUTOUTPUT =
+structure InputOutput: INPUTOUTPUT =
   struct
-  local open SchemeGeneral SchemeChar SchemeString SchemeProcedure in
+  local open General Character String Control in
 
   type input_port = instream
   type output_port = outstream

@@ -1,6 +1,4 @@
-(*$SCHEMEPAIR *)
-
-signature SCHEMEPAIR =
+signature PAIR =
 sig
 
 (* PAIRS
@@ -65,15 +63,13 @@ val cddddr: ('a, ('b, ('c, ('d, 'e) pair) pair) pair) pair -> 'e
 
 (* EQUALITY PREDICATE *)
 
-val pair_eq: ('a * 'a -> bool) * ('b * 'b -> bool) -> 
+val eq: ('a * 'a -> bool) * ('b * 'b -> bool) -> 
 	('a, 'b) pair * ('a, 'b) pair -> bool
 
 end
 
 
-(*$SchemePair: SCHEMEPAIR *)
-
-structure SchemePair: SCHEMEPAIR =
+structure Pair: PAIR =
   struct
 
   type ('a, 'b) pair = 'a * 'b
@@ -117,6 +113,12 @@ structure SchemePair: SCHEMEPAIR =
   fun cdddar x = cdr (cddar x)
   fun cddddr x = cdr (cdddr x)
 
-  fun pair_eq (eq1, eq2) ((x1,y1), (x2,y2)) = 
+  fun eq (eq1, eq2) ((x1,y1), (x2,y2)) = 
       eq1 (x1,x2) andalso eq2 (y1,y2)
   end
+
+
+
+
+
+

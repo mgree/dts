@@ -1,6 +1,4 @@
-(*$SCHEMESYMBOL *)
-
-signature SCHEMESYMBOL =
+signature SYMBOL =
 sig
 
 (* SYMBOLS
@@ -18,11 +16,13 @@ Standard procedures for Scheme type "symbol".
 
 (* TYPES *)
 
+type T
 type symbol
+sharing type T = symbol
   
 (* STANDARD PROCEDURES *)
 
-val symbol_eq: symbol * symbol -> bool
+val eq: symbol * symbol -> bool
 
 (* INPUT/OUTPUT *)
 (*
@@ -31,6 +31,9 @@ val parse_symbol: string -> (symbol, string) Result
 val print_symbol: outstream -> symbol -> unit
 val unparse_symbol: symbol -> string
 *)
+
+(* CONVERSIONS *)
+
 val str2symbol: string -> symbol
 val symbol2str: symbol -> string
 
@@ -39,12 +42,13 @@ end
 
 (*$SchemeSymbol: SCHEMESYMBOL *)
 
-structure SchemeSymbol: SCHEMESYMBOL =
+structure Symbol: SYMBOL =
   struct
 
+  type T = string
   type symbol = string
 
-  fun symbol_eq (s: symbol, s') = (s = s')
+  fun eq (s: symbol, s') = (s = s')
 (*
   fun parse_symbol (s as "+") = OK s
     | parse_symbol (s as "-") = OK s

@@ -1,17 +1,49 @@
-(*$ SchemeBindings: SCHEMEBINDINGS SchemeEnvironment SchemeBool SchemeChar
-                  SchemeString SchemeNumber SchemeSymbol SchemePair
-		  SchemeList SchemeProcedure SchemeVector SchemeInputOutput
-		  SchemeDynamic *)
+structure Basis =
+  struct
 
-structure Bindings: BINDINGS =
-  struct 
-  local open Bool Char Number Symbol String Pair List Procedure Vector
-             InputOutput Dynamic Environment Coercion 
-  in
-  type variable = variable
-  type dynamic = dynamic
+  open Error Object Pair List Symbol Number Char String Vector 
+       Control IO
 
-  val initbindings =
+  (* Some coercions for embedding functions in dynamic/tagged types *)
+
+  fun wrong_number_arguments n = 
+      raise InputError ("Wrong number of arguments", UNSPECIFIED_TAG())
+
+  fun ID f = f
+  fun FUNC0 h f = PROCEDURE_TAG 
+	(fn nil => h (f ())
+       	  | _ => wrong_number_arguments 0)
+  fun FUNC0L (g, h) f = PROCEDURE_TAG 
+	(fn l => h (f (map g l)))
+  fun FUNC1 (g, h) f = PROCEDURE_TAG
+        (fn [x] => h (f (g x)) |
+            _  => wrong_number_arguments 1)
+  fun FUNC1L (g, h, i) f = PROCEDURE_TAG
+        (fn (x::l) => i (f (g x, map h l))
+          | _ => wrong_number_arguments 1)
+  fun FUNC2 (g, h, i) f = PROCEDURE_TAG 
+	(fn [x,y] => i (f (g x, h y))
+          | _ => wrong_number_arguments 2)
+  fun FUNC2L (g, h, i, j) f = PROCEDURE_TAG 
+	(fn (x::y::l) => j (f (g x, h y, map i l)
+          | _ => wrong_number_arguments 2)
+  fun FUNC3 (g, h, i, j) f = PROCEDURE_TAG
+	(fn [x,y,z] => j (f (g x, h y, i z))
+	  | _ => wrong_number_arguments 3)
+
+  fun FUNC1O (g, h, i) d f  = PROCEDURE_TAG
+        (fn [x] => i (f (g x, d))
+	  | [x,y] => i (f (g x, h y))
+	  | _ => wrong_number_arguments 2)
+  fun FUNC1UT f = (fn [x] => f x |
+                      _ => wrong_number_arguments 1)
+
+  fun || (f, g) (x, y) = (f x, g y)
+
+  (* Bindings for all the essential standard procedures required by IEEE Scheme *)
+
+  infix ||
+  val bindings =
       [ ("not", FUNC1 (BOOL_UNTAG, BOOL_TAG) not),
         ("boolean?", FUNC1 (ID, BOOL_TAG) is_boolean),
 
@@ -64,24 +96,24 @@ structure Bindings: BINDINGS =
 	("reverse", FUNC1 (LIST_UNTAG, LIST_TAG) reverse),
 	("list-tail", FUNC2 (LIST_UNTAG, NUMBER_UNTAG, LIST_TAG) list_tail),
 	("list-ref", FUNC2 (LIST_UNTAG, NUMBER_UNTAG, ID) list_ref),
-	("memq", PROCEDURE_TAG 
-	 (fn dval => case FUNC2UT (ID, LIST_UNTAG, ID) (mem is_eq)
-		dval of nil => BOOL_TAG false | dl => LIST_TAG dl)),
-	("memv", PROCEDURE_TAG
-	 (fn dval => case FUNC2UT (ID, LIST_UNTAG, ID) (mem is_eqv)
-		dval of nil => BOOL_TAG false | dl => LIST_TAG dl)),
-	("member", PROCEDURE_TAG
-	 (fn dval => case FUNC2UT (ID, LIST_UNTAG, ID) (mem is_equal)
-		dval of nil => BOOL_TAG false | dl => LIST_TAG dl)),
-	("assq", PROCEDURE_TAG
-	 (fn dval => FUNC2UT (ID, list_map PAIR_UNTAG o LIST_UNTAG, PAIR_TAG)
-	  (ass is_eq) dval handle EmptyList "ass" => BOOL_TAG false)),
-	("assv", PROCEDURE_TAG
-	 (fn dval => FUNC2UT (ID, list_map PAIR_UNTAG o LIST_UNTAG, PAIR_TAG)
-	  (ass is_eqv) dval handle EmptyList "ass" => BOOL_TAG false)),
-	("assoc", PROCEDURE_TAG
-	 (fn dval => FUNC2UT (ID, list_map PAIR_UNTAG o LIST_UNTAG, PAIR_TAG)
-	  (ass is_equal) dval handle EmptyList "ass" => BOOL_TAG false)),
+	("memq", FUNC2 (ID, LIST_UNTAG, 
+			fn nil => BOOL_TAG false | dl => LIST_TAG dl)
+	         (mem is_eq)),
+	("memv", FUNC2 (ID, LIST_UNTAG, 
+			fn nil => BOOL_TAG false | dl => LIST_TAG dl)
+	               (mem is_eqv)),
+	("member", FUNC2 (ID, LIST_UNTAG, 
+			fn nil => BOOL_TAG false | dl => LIST_TAG dl)
+	               (mem is_equal)),
+	("assq", FUNC2 (ID, map PAIR_UNTAG o LIST_UNTAG, 
+			fn Some p => PAIR_TAG p | None => BOOL_TAG false)
+	         (ass is_eq)),
+	("assv", FUNC2 (ID, map PAIR_UNTAG o LIST_UNTAG, 
+			fn Some p => PAIR_TAG p | None => BOOL_TAG false)
+	         (ass is_eqv)),
+	("assoc", FUNC2 (ID, map PAIR_UNTAG o LIST_UNTAG, 
+			fn Some p => PAIR_TAG p | None => BOOL_TAG false)
+	         (ass is_equal)),
 		
 	("symbol?", FUNC1 (ID, BOOL_TAG) is_symbol),
 	("symbol->string", FUNC1 (SYMBOL_UNTAG, STRING_TAG)
@@ -172,8 +204,8 @@ structure Bindings: BINDINGS =
 	("string-ci>=?", FUNC2 (STRING_UNTAG, STRING_UNTAG, BOOL_TAG) string_ci_ge),
 	("substring", FUNC3 (STRING_UNTAG, NUMBER_UNTAG, NUMBER_UNTAG, STRING_TAG) substring),
 	("string-append", FUNC0L (STRING_UNTAG, STRING_TAG) string_append),
-	("string->list", FUNC1 (STRING_UNTAG, LIST_TAG o list_map CHAR_TAG) string2list),
-	("list->string", FUNC1 (list_map CHAR_UNTAG o LIST_UNTAG, STRING_TAG) list2string),
+	("string->list", FUNC1 (STRING_UNTAG, LIST_TAG o map CHAR_TAG) string2list),
+	("list->string", FUNC1 (map CHAR_UNTAG o LIST_UNTAG, STRING_TAG) list2string),
 	("string-copy", FUNC1 (STRING_UNTAG, STRING_TAG) string_copy),
 	("string-fill!", FUNC2 (STRING_UNTAG, CHAR_UNTAG, UNSPECIFIED_TAG) string_fill),
 
@@ -188,7 +220,7 @@ structure Bindings: BINDINGS =
 	("vector-fill!", FUNC2 (VECTOR_UNTAG, !, UNSPECIFIED_TAG) vector_fill),
 
 	("procedure?", FUNC1 (ID, BOOL_TAG) is_procedure),
-	("apply", FUNC2 (PROCEDURE_UNTAG, slist2list o LIST_UNTAG, ID) apply),
+	("apply", FUNC2 (PROCEDURE_UNTAG, LIST_UNTAG, ID) apply),
 	("map", FUNC1L (PROCEDURE_UNTAG, LIST_UNTAG, LIST_TAG) mapn),
 	("for-each", FUNC1L (PROCEDURE_UNTAG, LIST_UNTAG, UNSPECIFIED_TAG) for_each),
 	("force", FUNC1 (PROCEDURE_UNTAG, ID) (fn p => p nil)),
@@ -240,12 +272,14 @@ structure Bindings: BINDINGS =
 	 (fn _ => raise Unimplemented "newline")),
 	("write-char", PROCEDURE_TAG
 	 (fn _ => raise Unimplemented "write-char")),
-	("load", PROCEDURE_TAG
-	 (fn _ => raise Unimplemented "load")),
+(*	("load", FUNC1 (STRING_UNTAG, UNSPECIFIED_TAG) load), *)
 	("transcript-on", PROCEDURE_TAG
 	 (fn _ => raise Unimplemented "transcript-on")),
 	("transcript-off", PROCEDURE_TAG
-	 (fn _ => raise Unimplemented "transcript-off"))
+	 (fn _ => raise Unimplemented "transcript-off")),
+        ("exit", PROCEDURE_TAG
+          (fn _ => raise EXIT))
 	]
+
   end
-  end
+

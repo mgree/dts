@@ -1,6 +1,4 @@
-(*$SCHEMENUMBER *)
-
-signature SCHEMENUMBER =
+signature NUMBER =
 sig
 
 (* NUMBERS
@@ -30,11 +28,11 @@ val is_integer: number -> bool
 val is_exact: number -> bool
 val is_inexact: number -> bool
 
-val number_eq: number list -> bool
-val number_lt: number list -> bool
-val number_gt: number list -> bool
-val number_le: number list -> bool
-val number_ge: number list -> bool
+val eq: number list -> bool
+val lt: number list -> bool
+val gt: number list -> bool
+val le: number list -> bool
+val ge: number list -> bool
 
 val is_zero: number -> bool
 val is_positive: number -> bool
@@ -80,9 +78,9 @@ end
 
 (*$SchemeNumber: SCHEMENUMBER SchemeGeneral *)
 
-structure SchemeNumber: SCHEMENUMBER =
+structure Number: NUMBER =
   struct 
-  local open SchemeGeneral in
+  open General
 
   type number = int
   
@@ -93,26 +91,26 @@ structure SchemeNumber: SCHEMENUMBER =
   fun is_exact n = true
   fun is_inexact n = false
 
-  fun number_eq (nil: number list) = true |
-      number_eq [a] = true |
-      number_eq [a,b] = (a = b) |
-      number_eq (a::b::r) = (a = b) andalso number_eq (b::r)
-  fun number_lt (nil: number list) = true |
-      number_lt [a] = true |
-      number_lt [a,b] = (a < b) |
-      number_lt (a::b::r) = (a < b) andalso number_lt (b::r)
-  fun number_gt (nil: number list) = true |
-      number_gt [a] = true |
-      number_gt [a,b] = (a > b) |
-      number_gt (a::b::r) = (a > b) andalso number_gt (b::r)
-  fun number_le (nil: number list) = true |
-      number_le [a] = true |
-      number_le [a,b] = (a <= b) |
-      number_le (a::b::r) = (a <= b) andalso number_le (b::r)
-  fun number_ge (nil: number list) = true |
-      number_ge [a] = true |
-      number_ge [a,b] = (a >= b) |
-      number_ge (a::b::r) = (a >= b) andalso number_ge (b::r)
+  fun eq (nil: number list) = true |
+      eq [a] = true |
+      eq [a,b] = (a = b) |
+      eq (a::b::r) = (a = b) andalso eq (b::r)
+  fun lt (nil: number list) = true |
+      lt [a] = true |
+      lt [a,b] = (a < b) |
+      lt (a::b::r) = (a < b) andalso lt (b::r)
+  fun gt (nil: number list) = true |
+      gt [a] = true |
+      gt [a,b] = (a > b) |
+      gt (a::b::r) = (a > b) andalso gt (b::r)
+  fun le (nil: number list) = true |
+      le [a] = true |
+      le [a,b] = (a <= b) |
+      le (a::b::r) = (a <= b) andalso le (b::r)
+  fun ge (nil: number list) = true |
+      ge [a] = true |
+      ge [a,b] = (a >= b) |
+      ge (a::b::r) = (a >= b) andalso ge (b::r)
 
   fun is_zero n = (n=0)
   fun is_positive n = (n>0)
@@ -252,5 +250,4 @@ structure SchemeNumber: SCHEMENUMBER =
       in if n >= 0 then implode (map char (numb2numblist ([], n)))
 	 else implode ("-" :: map char (numb2numblist ([], n)))
       end
-  end
   end 

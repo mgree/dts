@@ -1,6 +1,6 @@
 (*$SCHEMEPROCEDURE *)
 
-signature SCHEMEPROCEDURE =
+signature CONTROL =
 sig
 
 (* CONTROL FEATURES
@@ -56,9 +56,9 @@ end
 
 (*$SchemeProcedure: SCHEMEPROCEDURE SchemeList SchemeGeneral *)
 
-structure SchemeProcedure: SCHEMEPROCEDURE = 
+structure Control: CONTROL = 
   struct 
-  local open SchemeGeneral SchemeList in
+  local open General List in
 
   type ('a, 'b) procedure = 'a -> 'b
   type 'a slist = 'a slist

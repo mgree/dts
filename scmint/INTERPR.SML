@@ -139,9 +139,9 @@ functor Interpret (Runtime: RUNTIME) =
           in eval_body (push env binds) b
           end
      | eval_exp env (LETS (l, b)) =
-          let fun eval_lets env nil = eval_body env b 
+          let fun eval_lets env nil = eval_body env b |
   	        eval_lets env ((v,e)::r) = 
-  		     eval_lets (add env (v, eval_exp env e)) 
+  		     eval_lets (add env (v, eval_exp env e)) r
           in eval_lets env l
           end
      | eval_exp env (LETREC (l, b)) =
@@ -157,7 +157,7 @@ functor Interpret (Runtime: RUNTIME) =
   		   then eval_sequence newenv s
   		else (app (eval_exp newenv) el; 
   		      app (fn (x,y,UNDEFEXP) => () 
-	                 | (x,y,z)=>(get_value (x,newenv):= !(eval_exp newenv z))) l
+	                 | (x,y,z)=>(get_value (x,newenv):= !(eval_exp newenv z))) l;
 	              iterate())
   	  in iterate() 
   	  end
@@ -165,34 +165,34 @@ functor Interpret (Runtime: RUNTIME) =
      | eval_exp env (QUASIQUOTE t) = 
         let fun append (nil, r) = r
               | append (l1::lr, r) = PAIR_TAG (l1, append (lr, r))
-            fun eval_vector_list nil = ni
+            fun eval_vector_list nil = nil
 	      | eval_vector_list (TEMPLATE t :: lr) = 
-		  eval_template t :: eval_vector_list l
+		  eval_template t :: eval_vector_list lr
               | eval_vector_list (SPLICE e :: lr) =
 		  LIST_UNTAG (eval_exp env e) @ eval_vector_list lr
 	    and eval_template (SIMPLETEMP d) = eval_datum d
-	      | eval_template (PAIRTEMP (TEMPLATE t1, t2)) 
-		  PAIR_TAG (eval_template t1, eval_template t2
+	      | eval_template (PAIRTEMP (TEMPLATE t1, t2)) = 
+		  PAIR_TAG (eval_template t1, eval_template t2)
 	      | eval_template (PAIRTEMP (SPLICE e, t)) =
 		  append (LIST_UNTAG (eval_exp env e), eval_template t)
 	      | eval_template (VECTTEMP tl) = 
 		  VECTOR_TAG (Vector.vector (eval_vector_list tl))
 	      | eval_template (UNQUOTE e) = eval_exp env e
-        in eval_template 
+        in eval_template t
         end 
     | eval_exp env UNDEFEXP = unspecified
   and eval_sequence env nil = unspecified
     | eval_sequence env [e] = eval_exp env e
     | eval_sequence env (e1::er) = (eval_exp env e1; eval_sequence env er) 
-  and eval_body env (nil, s) = eval_sequence env s 
-      eval_body env (dl, s) 
+  and eval_body env (nil, s) = eval_sequence env s |
+      eval_body env (dl, s) =
           let fun get_vars (VARDEF (v,_):: rd) = v:: get_vars rd |
   	        get_vars (FUNDEF (v, _, _):: rd) = v:: get_vars rd |
   	        get_vars (BEGINDEF dl :: dl') = get_vars (dl @ dl') |
   		get_vars nil = nil
   	    val newenv = push env (map (fn v => (v, unspecified))(get_vars dl))
   	    fun eval_definition_par (VARDEF (v,e)) = 
-                  (get_value(v,newenv) := !(eval_exp newenv e)) 
+                  (get_value(v,newenv) := !(eval_exp newenv e)) |
   	    eval_definition_par (FUNDEF (v, f, b)) = 
                   (get_value(v,newenv) := !(eval_exp newenv (LAMBDA (f,b)))) |
               eval_definition_par (BEGINDEF dl) = app eval_definition_par dl
@@ -200,29 +200,31 @@ functor Interpret (Runtime: RUNTIME) =
   	    eval_sequence newenv s)
   	end
 
-  fun eval_definition (VARDEF (v,e)) 
-	(top_env := add (!top_env) (v, eval_exp empty_env e)) 
+  fun eval_definition (VARDEF (v,e)) = 
+	(top_env := add (!top_env) (v, eval_exp empty_env e)) |
       eval_definition (FUNDEF (v, f, b)) = 
-           eval_definition (VARDEF (v, LAMBDA (f,b))) 
-      eval_definition (BEGINDEF dl) = app eval_definition d
-  fun eval (EXP e) = eval_exp empty_env e 
-      eval (DEF d) = (eval_definition d; unspecified
+           eval_definition (VARDEF (v, LAMBDA (f,b))) |
+      eval_definition (BEGINDEF dl) = app eval_definition dl 
+
+  fun eval (EXP e) = eval_exp empty_env e |
+      eval (DEF d) = (eval_definition d; unspecified)
+
   fun command_loop (is, os, es) =
-      ((output (es, "> ")
-        Dynamic.write (eval (Command.parse (Datum.read is)), os)) handl
+      ((output (es, "> ");
+        Dynamic.write (eval (Command.parse (Datum.read is)), os)) handle
            Datum.ReadError (m, is) => output(es, m ^ ": " ^ is)
-         | Command.ParseError (m, d) =
-		(output(es, m ^ ":\n"); Dynamic.write (eval_datum d, es)
-         | RuntimeError s => output(es, s
+         | Command.ParseError (m, d) => 
+		(output(es, m ^ ":\n"); Dynamic.write (eval_datum d, es))
+         | RuntimeError s => output(es, s)
          | Dynamic.TypeError (m, dv) => 
-		(output(es, m ^ ": "); Dynamic.write (dv, es)
+		(output(es, m ^ ": "); Dynamic.write (dv, es))
 	 | Environment.Lookup k => output(es, "Unbound variable: " ^ k)
          | General.Unimplemented s => output(es, s ^ "not implemented\n")
          | General.IllegalInput (m,s) => output(es, m ^": " ^ s);
        output (es, "\n");
        command_loop (is, os, es)) handle Datum.EOF => ()
 
-  fun scheme () = command_loop (std_in, std_out, std_out
-  en
-  en
-
+  fun scheme () = command_loop (std_in, std_out, std_out)
+
+  end
+  end

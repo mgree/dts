@@ -1,6 +1,6 @@
 (*$SCHEMELIST *)
 
-signature SCHEMELIST =
+signature LIST =
 sig
 
 (* LISTS
@@ -19,9 +19,7 @@ Standard procedures for Scheme type "list".
 
 (* TYPES *)
 
-type 'a Option
 type 'a slist
-sharing type slist = list
 
 (* CONSTRUCTORS *)
 
@@ -36,22 +34,23 @@ val reverse: 'a slist -> 'a slist
 val list_tail: 'a slist * int -> 'a slist
 val list_ref: 'a slist * int -> 'a
 val mem: ('a * 'a -> bool) -> 'a * 'a slist -> 'a slist
-val ass: ('a * 'a -> bool) -> 'a * ('a * 'b) slist -> ('a * 'b) Option
+val ass: ('a * 'a -> bool) -> 'a * ('a * 'b) slist -> ('a * 'b) General.Option
 
 (* EQUALITY PREDICATE *)
 
-val list_eq: ('a * 'a -> bool) -> 'a slist * 'a slist -> bool
+val eq: ('a * 'a -> bool) -> 'a slist * 'a slist -> bool
+
+(* CONVERSIONS *)
+
+val slist2list: 'a slist -> 'a list
 
 end
 
 
-(*$SchemeList: SCHEMELIST SchemeGeneral *)
-
-structure SchemeList: SCHEMELIST =
+structure List: LIST =
   struct 
-  local open SchemeGeneral
-  in
-  type 'a Option = 'a Option
+  open General
+
   type 'a slist = 'a list 
 
   fun list (l: 'a list) = l
@@ -67,8 +66,10 @@ structure SchemeList: SCHEMELIST =
   fun list_tail (l, n) =
       let fun list_tail_checked (l, 0) = l |
 	      list_tail_checked (a::r, n) = list_tail_checked (r, n-1) |
-              list_tail_checked (nil, _) = raise IllegalInput ("Empty list argument in list-tail", "")
-      in if n < 0 then raise IllegalInput ("Negative index in list-tail", makestring n)
+              list_tail_checked (nil, _) = 
+		raise IllegalInput ("Empty list argument in list-tail", "")
+      in if n < 0 
+	    then raise IllegalInput ("Negative index in list-tail", makestring n)
 	 else list_tail_checked (l, n)
       end
   fun list_ref (l, n) =
@@ -84,9 +85,9 @@ structure SchemeList: SCHEMELIST =
   					 ass eq (obj, r) |
       ass eq (obj, nil) = None
 
-  fun list_eq eq (nil, nil) =  true |
-      list_eq eq (a::r, a'::r') = eq (a,a') andalso list_eq eq (r,r') |
-      list_eq eq _ = false
+  fun eq eq' (nil, nil) =  true |
+      eq eq' (a::r, a'::r') = eq' (a,a') andalso list_eq eq' (r,r') |
+      eq eq' _ = false
 
+  fun slist2list (l: 'a slist) = l
   end 
-  end

@@ -1,9 +1,4 @@
-(* $Header: /net/ask/home/ask1/rehof/dynamic/jakob/sys/RCS/general.sml,v 1.12 94/01/20 10:55:58 rehof Exp Locker: rehof $ *)
-
-
-(*$SCHEMEGENERAL *)
-
-signature SCHEMEGENERAL =
+signature GENERAL =
 sig
 
 (* GENERAL
@@ -46,9 +41,7 @@ end
 
 
 
-(*$SchemeGeneral: SCHEMEGENERAL *)
-
-structure SchemeGeneral: SCHEMEGENERAL = 
+structure General: GENERAL = 
   struct
 
   datatype 'a Option = None | Some of 'a
@@ -60,7 +53,7 @@ structure SchemeGeneral: SCHEMEGENERAL =
   exception EOF
   exception EXIT
 
-  fun foldappend ls = fold op@ ls nil
+  fun foldappend ls = fold (fn (l,l') => l @ l') ls nil
 
   fun member x y =  case y of
                          [] => false
@@ -68,4 +61,3 @@ structure SchemeGeneral: SCHEMEGENERAL =
 
 
   end
-

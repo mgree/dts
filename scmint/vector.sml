@@ -1,6 +1,6 @@
 (*$SCHEMEVECTOR *)
 
-signature SCHEMEVECTOR =
+signature VECTOR =
 sig
 
 (* VECTORS
@@ -55,9 +55,9 @@ end
 
 (*$SchemeVector: SCHEMEVECTOR SchemeGeneral SchemeList *)
 
-structure SchemeVector: SCHEMEVECTOR =
+structure Vector: VECTOR =
   struct 
-  local open SchemeGeneral SchemeList in
+  local open General List in
 
   type 'a vector = 'a list
   type natural = int

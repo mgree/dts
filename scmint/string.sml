@@ -1,6 +1,4 @@
-(*$SCHEMESTRING *)
-
-signature SCHEMESTRING =
+signature STRING =
 sig
 
 (* STRINGS
@@ -18,7 +16,9 @@ Standard procedures for Scheme type "string".
 
 (* TYPES *)
 
+type T
 type sstring
+sharing type T = sstring
 type char
 type natural
 type number
@@ -75,9 +75,9 @@ end
 (*$SchemeString: SCHEMESTRING SchemeGeneral SchemeChar SchemeNumber
                   SchemeSymbol SchemeList *)
 
-structure SchemeString: SCHEMESTRING =
+structure String: STRING =
   struct
-  local open SchemeGeneral SchemeChar SchemeNumber SchemeSymbol SchemeList in
+  local open General Character Number Symbol List in
 
   datatype sstring = FIXED of string |
   		     VARSTR of char ref list
@@ -213,5 +213,3 @@ structure SchemeString: SCHEMESTRING =
 
   end
   end
-
-

@@ -1,6 +1,4 @@
-(*$SCHEMEBOOL *)
-
-signature SCHEMEBOOL =
+signature BOOLEAN =
 sig
 
 (* BOOLEANS
@@ -18,15 +16,16 @@ Standard procedures for Scheme type "boolean".
 
 (* TYPES *)
 
+type T
 type boolean
-sharing type boolean = bool
+sharing type T = boolean = bool
 
 (* The Scheme type boolean is shared with the SML type bool *)
 
 
 (* OBSERVERS *)
 
-val boolean_eq: boolean * boolean -> boolean
+val eq: boolean * boolean -> boolean
 val not: boolean -> boolean
 
 (* INPUT/OUTPUT *)
@@ -48,13 +47,13 @@ end
 
 (*$SchemeBool: SCHEMEBOOL SchemeGeneral *)
 
-structure SchemeBool: SCHEMEBOOL =
+structure Boolean: BOOLEAN =
   struct
-  local open SchemeGeneral in
 
+  type T = bool
   type boolean = bool
 
-  fun boolean_eq (x: bool, y) = (x = y)
+  fun eq (x: bool, y) = (x = y)
   val not = not
 (*
   fun parse_boolean s = 
@@ -73,9 +72,14 @@ structure SchemeBool: SCHEMEBOOL =
 *)
   fun str2boolean "#t" = true |
       str2boolean "#f" = false |
-      str2boolean s = raise IllegalInput ("Illegal Boolean constant", s)
+      str2boolean s = 
+	raise General.IllegalInput ("Illegal Boolean constant", s)
   fun boolean2str true = "#t" |
       boolean2str false = "#f"
 
   end
-  end
+
+
+
+
+

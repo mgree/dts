@@ -1,6 +1,6 @@
 (*$SCHEMEDYNAMIC *)
 
-signature SCHEMEDYNAMIC =
+signature DYNAMIC =
 sig
 
 (* DYNAMIC
@@ -20,7 +20,7 @@ General Scheme (dynamic) objects and generic routines
 
 type dynamic
 
-type bool
+type boolean
 type symbol
 type char
 type 'a vector
@@ -32,6 +32,7 @@ type ('a, 'b) procedure
 type 'a slist
 type input_port
 type output_port
+
 
 (* INPUT/OUTPUT *)
 
@@ -48,7 +49,7 @@ val display: dynamic * output_port -> unit
 
 (* CONSTRUCTORS *)
 
-val BOOL_TAG: bool -> dynamic
+val BOOL_TAG: boolean -> dynamic
 val SYMBOL_TAG: symbol -> dynamic
 val CHAR_TAG: char -> dynamic
 val VECTOR_TAG: dynamic vector -> dynamic
@@ -62,13 +63,11 @@ val INPUT_PORT_TAG: input_port -> dynamic
 val OUTPUT_PORT_TAG: output_port -> dynamic
 val UNSPECIFIED_TAG: unit -> dynamic
 
-val unspecified: dynamic
-
 (* DESTRUCTORS *)
 
 exception TypeError of string * dynamic
 
-val BOOL_UNTAG: dynamic -> bool
+val BOOL_UNTAG: dynamic -> boolean
 val SYMBOL_UNTAG: dynamic -> symbol
 val CHAR_UNTAG: dynamic -> char
 val VECTOR_UNTAG: dynamic -> dynamic vector
@@ -82,7 +81,7 @@ val INPUT_PORT_UNTAG: dynamic -> input_port
 val OUTPUT_PORT_UNTAG: dynamic -> output_port
 
 val typecase:
-	{bool: (bool -> 'a), 
+	{bool: (boolean -> 'a), 
 	 symbol: (symbol -> 'a),
 	 char: (char -> 'a), 
 	 vector: (dynamic vector -> 'a), 
@@ -98,7 +97,7 @@ val typecase:
 
 
 
-val bool_case        : (bool -> 'a) -> (dynamic -> 'a) -> 
+val bool_case        : (boolean -> 'a) -> (dynamic -> 'a) -> 
                        (dynamic -> 'a)
 val symbol_case      : (symbol -> 'a) -> (dynamic -> 'a) -> 
                        (dynamic -> 'a)
@@ -125,29 +124,29 @@ val output_port_case : (output_port -> 'a) -> (dynamic -> 'a) ->
 
 (* TYPE TESTING PROCEDURES *)
 
-val is_boolean: dynamic -> bool
-val is_symbol: dynamic -> bool
-val is_char: dynamic -> bool
-val is_vector: dynamic -> bool
-val is_pair: dynamic -> bool
-val is_number: dynamic -> bool
-val is_string: dynamic -> bool
-val is_procedure: dynamic -> bool
+val is_boolean: dynamic -> boolean
+val is_symbol: dynamic -> boolean
+val is_char: dynamic -> boolean
+val is_vector: dynamic -> boolean
+val is_pair: dynamic -> boolean
+val is_number: dynamic -> boolean
+val is_string: dynamic -> boolean
+val is_procedure: dynamic -> boolean
 
-val is_list: dynamic -> bool
-val is_null: dynamic -> bool
-val is_input_port: dynamic -> bool
-val is_output_port: dynamic -> bool
+val is_list: dynamic -> boolean
+val is_null: dynamic -> boolean
+val is_input_port: dynamic -> boolean
+val is_output_port: dynamic -> boolean
 
 (* CONVERSIONS *)
 
-val dynamic2bool: dynamic -> bool
+val dynamic2bool: dynamic -> boolean
 
 (* EQUALITY PREDICATES *)
 
-val is_eq: dynamic * dynamic -> bool
-val is_eqv: dynamic * dynamic -> bool
-val is_equal: dynamic * dynamic -> bool
+val is_eq: dynamic * dynamic -> boolean
+val is_eqv: dynamic * dynamic -> boolean
+val is_equal: dynamic * dynamic -> boolean
 
 end
 
@@ -158,14 +157,13 @@ end
 	SchemeVector SchemePair SchemeList SchemeProcedure SchemeNumber
 	SchemeInputOutput SchemeString *)
 
-structure SchemeDynamic: SCHEMEDYNAMIC =
+structure Dynamic: DYNAMIC =
   struct
   local 
-      open SchemeGeneral SchemeBool SchemeSymbol SchemeChar SchemeVector 
-      SchemePair SchemeNumber SchemeString SchemeProcedure SchemeList 
-      SchemeInputOutput 
+      open General Boolean Symbol Character Vector Pair Number String List 
+	   Control InputOutput 
   in
-  type bool = bool
+  type boolean = boolean
   type symbol = symbol
   type char = char
   type 'a vector = 'a vector
@@ -178,7 +176,7 @@ structure SchemeDynamic: SCHEMEDYNAMIC =
   type output_port = output_port
       
   datatype dyn = 
-      BOOL of bool | 
+      BOOL of boolean | 
       CHAR of char |
       STRING of sstring |
       SYMBOL of symbol |
@@ -594,7 +592,7 @@ structure SchemeDynamic: SCHEMEDYNAMIC =
             in
                (* This is not entirely correct, since output may not be    *)
                (* defined on an oport. But since we do not wish to use     *)
-               (* the write_char function of SchemeInputOutput we use this *)
+               (* the write_char function of InputOutput we use this *)
                (* function for the moment. We probably ought to have a     *)
                (* function  like write_char which writes a string ?        *)
 
@@ -642,7 +640,7 @@ fun display (dval,oport) =
                (* defined on an oport.                                    *)
                (* We probably ought to have a function                    *)
                (* like write_char which writes a string ?                 *)
-               (* See also comment on SchemeWrite.write.                  *)
+               (* See also comment on Write.write.                  *)
 
                output(oport,disp dval)
            end
@@ -652,4 +650,3 @@ fun display (dval,oport) =
 
   end
   end
-  
