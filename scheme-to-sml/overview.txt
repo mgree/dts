@@ -1,0 +1,61 @@
+The DTS System handles a single expression using the following phases:
+
+------------------
+|  Input stream  |
+------------------
+        |
+   read_datum
+        |
+-----------------
+|     Datum     |       Unattributed datum
+-----------------
+        |
+     dat2exp
+        |
+-----------------
+|   Unattr. AST |       
+-----------------
+        |
+    attribute
+        |
+----------------
+|   Attr. AST  |        Attribute of each node is a pair of new 
+----------------        attributed types (type nodes)
+        |
+   unify_types
+        |
+----------------
+|   Attr. AST  |        AST is well-attributed (canonically attributed)
+----------------
+        |
+ get_constraints
+        |
+----------------
+| Type graph   |        The type graph is simply the graph induced by 
+----------------        canonical coercions
+        |
+    simplify
+        |
+----------------
+|  Type graph  |        All type variable-to-type variable edges are contracted
+----------------        (Note: this is actually "too aggressive")
+        |
+ induced_unify
+        |
+----------------
+| Type graph   |        The type graph has type nodes collapsed according to
+----------------        simple value flow rules
+        |
+  scc_contract
+        |
+----------------
+| Type graph   |        The simple type graph has all cycles eliminated
+----------------        (Note: this step is actually skipped due to "simplify")
+        |
+     close
+        |
+----------------
+|  Poly. type  |        Turn into polymorphic type.  The subexpressions have
+----------------        the correct simple types by side effect during 
+                        previous phases.
+

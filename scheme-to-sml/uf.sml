@@ -2,12 +2,16 @@
 
 structure UnionFind: UNIONFIND =
 
-(* UNIONFIND DATA STRUCTURE WITH PATH COMPRESSION AND RANKED UNION
+(* UNIONFIND DATA STRUCTURE WITH PATH HALVING AND RANKED UNION
 
 Created by: Fritz Henglein, DIKU, University of Copenhagen (henglein@diku.dk)
 Date:       29 Dec 1994
 
 Maintenance: Author
+
+Comment:     This implementation of union/find was found to be the most
+	     efficient combination of implementations of the basic
+	     union and find operations
 
 RCS LOG
 
@@ -22,11 +26,11 @@ struct
       | PTR of 'a uref
   withtype 'a uref = 'a urefC ref
 
+
   fun find (p as ref (ECR _)) = p
-    | find (p as ref (PTR p')) =
-         let val p'' = find p'
-         in (p := PTR p''; p'')
-         end
+    | find (p as ref (PTR (p' as ref (ECR _)))) = p'
+    | find (p as ref (PTR (p' as ref (PTR p'')))) =
+	(p := PTR p''; find p'')
 
   fun uref x = ref (ECR (x, 0))
 
@@ -37,7 +41,7 @@ struct
       
   fun equal (p, p') = (find p = find p')
 
-  fun op::= (p, x) = 
+  fun ::= (p, x) = 
       let val p' = find p
       in case !p' of
            ECR (_, r) => (p' := ECR (x, r))
@@ -60,15 +64,15 @@ struct
                   if p' = q' then
                      p' := ECR (f(pc,pc), pr)
                   else if pr = qr then 
-                     (q' := ECR (f(pc,qc), qr+1);
-                      p' := PTR q')
+                     (p' := PTR q'; 
+                      q' := ECR (f(pc,qc), qr+1))
                   else if pr < qr then 
-                     (q' := ECR (f(pc,qc), qr);
-                      p' := PTR q')
+                     (p' := PTR q'; 
+                      q' := ECR (f(pc,qc), qr))                     
                   else (* pr > qr *)
-                     (p' := ECR (f(pc,qc), pr);
-                      q':= PTR p')
-               | _ => raise UnionFind "union")
+                     (q':= PTR p';
+                      p' := ECR (f(pc,qc), pr))
+               | _ => raise UnionFind "union_with")
           end
 
   fun union (p, q) = 
@@ -88,3 +92,4 @@ struct
           end
 
 end
+

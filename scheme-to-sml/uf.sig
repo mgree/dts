@@ -87,7 +87,8 @@ RCS LOG
   val union_with: ('a * 'a -> 'a) -> 'a uref * 'a uref -> unit
   (* union_with f (e, e') makes e and e' equal; if v and v' are the 
      contents of e and e', respectively, before unioning them, 
-     then the contents of the unioned element is f(v,v') *)
+     then the contents of the unioned element is f(v,v');
+     Note: It is guaranteed that e and e' are unioned _before_ f is called *)
 
   val union: 'a uref * 'a uref -> unit
   (* union (e, e') makes e and e' equal; the contents of the unioned

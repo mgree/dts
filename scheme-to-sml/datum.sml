@@ -1,50 +1,19 @@
 structure Datum (*: SCHEMEDATUM *) =
   struct
 
-  datatype ('da, 'd) datum_hom =
-      DHOM of { booldat: 'da * bool -> 'd,
-                chardat: 'da * string -> 'd,
-                stridat: 'da * string -> 'd,
-                symbdat: 'da * string -> 'd,
-                numbdat: 'da * string -> 'd,
-                vectdat: 'da * 'd list -> 'd,
-                pairdat: 'da * 'd * 'd -> 'd,
-                nildat: 'da -> 'd 
-              }
+  datatype 'a udatum =
+      BOOLDAT of bool |
+      CHARDAT of string |
+      STRIDAT of string |
+      SYMBDAT of string |
+      NUMBDAT of string |
+      VECTDAT of 'a datum list |
+      PAIRDAT of 'a datum * 'a datum |   
+      NILDAT 
+  withtype 'a datum = 'a udatum * 'a
 
-  datatype 'a datum =
-      BOOLDAT of 'a * bool |
-      CHARDAT of 'a * string |
-      STRIDAT of 'a * string |
-      SYMBDAT of 'a * string |
-      NUMBDAT of 'a * string |
-      VECTDAT of 'a * 'a datum list |
-      PAIRDAT of 'a * 'a datum * 'a datum |   
-      NILDAT of 'a
+  fun dattrib (ud, a) = a
 
-  fun dattrib (BOOLDAT (a,_)) = a
-    | dattrib (CHARDAT (a,_)) = a
-    | dattrib (STRIDAT (a,_)) = a
-    | dattrib (SYMBDAT (a,_)) = a
-    | dattrib (NUMBDAT (a,_)) = a
-    | dattrib (VECTDAT (a,_)) = a
-    | dattrib (PAIRDAT (a,_,_)) = a
-    | dattrib (NILDAT a) = a
-   
-  fun apply_dhom (DHOM D) = 
-      let fun dapply (BOOLDAT x) = #booldat D x
-            | dapply (CHARDAT x) = #chardat D x
-            | dapply (STRIDAT x) = #stridat D x
-            | dapply (SYMBDAT x) = #symbdat D x
-            | dapply (NUMBDAT x) = #numbdat D x
-            | dapply (VECTDAT (a,dl)) = #vectdat D (a, map dapply dl)
-            | dapply (PAIRDAT (a, d1, d2)) = 
-                        #pairdat D (a, dapply d1, dapply d2)
-            | dapply (NILDAT a) = #nildat D a 
-      in dapply 
-      end
-
-  
 
   datatype token =
       Identifier of string
@@ -168,10 +137,10 @@ structure Datum (*: SCHEMEDATUM *) =
                 | c => Identifier (c ^ get_identifier())
               end
  
-          fun listdat [] = NILDAT (init())
-            | listdat (d::r) = PAIRDAT (init(), d, listdat r)
+          fun listdat [] = (NILDAT, init())
+            | listdat (d::r) = (PAIRDAT (d, listdat r), init())
 
-          fun make_datum DC s = DC (init(), s)
+          fun make_datum DC s = (DC s, init())
           fun parse_datum(tok) =
               (* parses the input stream with tok prepended as the 
                first token *)
@@ -182,7 +151,7 @@ structure Datum (*: SCHEMEDATUM *) =
                 | CharSym c => make_datum CHARDAT c
                 | QuotationMark => make_datum STRIDAT (get_string())
                 | LeftParen => parse_list()
-                | VectorSym => VECTDAT (init(), parse_vector())
+                | VectorSym => (VECTDAT (parse_vector()), init())
                 | QuoteSym => 
                       listdat [make_datum SYMBDAT "quote", 
                                parse_datum (get_next_token())]
@@ -199,19 +168,19 @@ structure Datum (*: SCHEMEDATUM *) =
           and parse_list() =
               let val tok = get_next_token()
               in if tok = RightParen 
-                    then NILDAT (init())
-                 else PAIRDAT (init(), parse_datum(tok), parse_list_rem())
+                    then (NILDAT, init())
+                 else (PAIRDAT (parse_datum(tok), parse_list_rem()), init())
               end
           and parse_list_rem() =
               let val tok = get_next_token()
               in case tok of
-                  RightParen => NILDAT (init())
+                  RightParen => (NILDAT, init())
                 | DotSym => let val pd = parse_datum(get_next_token())
                             in if get_next_token() = RightParen
                                    then pd
                                else read_error "Illegal input: ) expected"
                             end
-                | _ => PAIRDAT (init(),parse_datum(tok), parse_list_rem())
+                | _ => (PAIRDAT (parse_datum(tok), parse_list_rem()), init())
               end
           and parse_vector() =
               let val tok = get_next_token()
