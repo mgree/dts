@@ -1,4 +1,4 @@
-(*$SchemeBindings: SCHEMEBINDINGS SchemeEnvironment SchemeBool SchemeChar
+(*$ SchemeBindings: SCHEMEBINDINGS SchemeEnvironment SchemeBool SchemeChar
                   SchemeString SchemeNumber SchemeSymbol SchemePair
 		  SchemeList SchemeProcedure SchemeVector SchemeInputOutput
 		  SchemeDynamic *)

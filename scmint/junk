@@ -1,0 +1,1640 @@
+[Loading SML core image]
+
+[Increasing heap to 1024k]
+
+[Increasing heap to 8488k]
+val it = true : bool
+- use "uf.sml";
+[opening uf.sml]
+signature UNIONFIND =
+  sig
+    type 'a UF
+    val make : '1a -> '1a UF
+    val equal : 'a UF * 'a UF -> bool
+    val !! : 'a UF -> 'a
+    val ::= : 'a UF * 'a -> unit
+    val union : ('1a * '1a -> '1a) -> '1a UF * '1a UF -> unit
+  end
+structure UnionFind : UNIONFIND
+val it = () : unit
+- use "general.sml";
+[opening general.sml]
+signature SCHEMEGENERAL =
+  sig
+    datatype 'a Option
+      con None : 'a Option
+      con Some : 'a -> 'a Option
+    datatype ('a,'b) Result
+      con Fail : 'b -> ('a,'b) Result
+      con OK : 'a -> ('a,'b) Result
+    type natural
+    exception Unimplemented of string
+    exception IllegalInput of string * string
+    exception EOF
+    exception EXIT
+    val foldappend : 'a list list -> 'a list
+    val member : ''a -> ''a list -> bool
+    sharing type natural = int 
+  end
+structure SchemeGeneral : SCHEMEGENERAL
+val it = () : unit
+- use "datum.sml";
+[opening datum.sml]
+structure SchemeDatum :
+  sig
+    eqtype 'a anndatum
+    datatype 'a datum
+      con BOOLDAT : bool -> 'a datum
+      con CHARDAT : string -> 'a datum
+      con NILDAT : 'a datum
+      con NUMBDAT : string -> 'a datum
+      con PAIRDAT : 'a anndatum * 'a anndatum -> 'a datum
+      con STRIDAT : string -> 'a datum
+      con SYMBDAT : string -> 'a datum
+      con VECTDAT : 'a anndatum list -> 'a datum
+    type 'a datum_hom
+    datatype token
+      con BoolSym : bool -> token
+      con CharSym : string -> token
+      con DotSym : token
+      con EndOfInput : token
+      con Identifier : string -> token
+      con LeftParen : token
+      con NumbSym : string -> token
+      con QuasiquoteSym : token
+      con QuotationMark : token
+      con QuoteSym : token
+      con RightParen : token
+      con UnqSplSym : token
+      con UnquoteSym : token
+      con VectorSym : token
+    val aread : 'a datum_hom -> unit -> 'a anndatum
+    val att_dhom : 'a datum_hom -> 'a anndatum datum_hom
+    val dhom : (unit -> 'a) -> 'a anndatum datum_hom
+    val gen_default_att : (unit -> 'a) -> ('b -> 'c) -> 'b -> 'a * 'c
+    val nothing : 'a -> unit
+    val read : unit -> unit anndatum
+    val read_datum : 'a datum_hom -> instream -> 'a
+  end
+val it = () : unit
+- use "exp.sml";
+[opening exp.sml]
+
+[Major collection...
+[Increasing heap to 8576k]
+
+[Increasing heap to 8840k]
+ 52% used (3057748/5800976), 3500 msec]
+
+[Increasing heap to 9080k]
+exp.sml:164.50-164.54 Error: unbound variable or constructor: IFEXP
+exp.sml:155.3-174.6 Error: unresolved flex record in let pattern
+  type: {anullpar:'Y -> 'X, apairpar:'W -> string * 'V -> 'U,
+         assign:'T -> 'S UF * 'T -> 'R, avarpar:'Q -> 'P UF -> 'O,
+         call:'N -> 'M * 'M -> 'L, empty:'K -> 'J, lambda:'I -> 'H * 'H -> 'G,
+         literal:'F -> 'E -> 'D, nullarg:'C -> 'B,
+         pairarg:'A -> 'YZ * 'YZ -> 'YY, variable:'YX -> 'YW UF -> 'YV, '...Z}
+exp.sml:155.3-174.6 Error: unresolved flex record in let pattern
+  type: {ifexp:'Y * 'X * 'W -> 'V, '...Z}
+- val e = "exp.sml"; use e;
+val e = "exp.sml" : string
+[opening exp.sml]
+exp.sml:187.28-187.65 Error: operator and operand don't agree (type mismatch)
+  operator domain: 'Z variable * ('Y,'Z) annformals
+  operand:         ('aU * 'X) * ('aU * 'W)
+  in expression:
+    APAIRPAR arg
+exp.sml:170.3-189.6 Error: unresolved flex record in let pattern
+  type: {ifexp:'Y * 'Y * 'Y -> 'X, '...Z}
+- use e;
+[opening exp.sml]
+exp.sml:170.3-189.6 Error: unresolved flex record in let pattern
+  type: {ifexp:'Y * 'Y * 'Y -> 'X, '...Z}
+- use e;
+[opening exp.sml]
+
+[Major collection...
+[Increasing heap to 9152k]
+
+[Increasing heap to 9368k]
+ 52% used (3279396/6198568), 4367 msec]
+
+[Increasing heap to 9696k]
+structure KernelExpression :
+  sig
+    eqtype ('a,'b) annargs
+    eqtype ('a,'b) annexp
+    eqtype ('a,'b) annformals
+    datatype ('a,'b) args
+      con NULLARG : ('a,'b) args
+      con PAIRARG : ('a,'b) annexp * ('a,'b) annargs -> ('a,'b) args
+    type ('a,'b) att_exp_hom
+    datatype ('a,'b) definition
+      con BEGINDEF : ('a,'b) definition list -> ('a,'b) definition
+      con COMMAND : ('a,'b) annexp -> ('a,'b) definition
+      con VARDEF : 'b variable * ('a,'b) annexp -> ('a,'b) definition
+    datatype ('a,'b) exp
+      con ASSIGN : 'b variable * ('a,'b) annexp -> ('a,'b) exp
+      con CALL : ('a,'b) annexp * ('a,'b) annargs -> ('a,'b) exp
+      con EMPTY : ('a,'b) exp
+      con IF : ('a,'b) annexp * ('a,'b) annexp * ('a,'b) annexp -> ('a,'b) exp
+      con LAMBDA : ('a,'b) annformals * ('a,'b) annexp -> ('a,'b) exp
+      con LITERAL : 'a SchemeDatum.anndatum -> ('a,'b) exp
+      con VARIABLE : 'b variable -> ('a,'b) exp
+    type ('a,'b,'c,'d,'e) exp_hom
+    datatype ('a,'b) formals
+      con ANULLPAR : ('a,'b) formals
+      con APAIRPAR : 'b variable * ('a,'b) annformals -> ('a,'b) formals
+      con AVARPAR : 'b variable -> ('a,'b) formals
+    eqtype 'a variable
+    exception ParseError of string
+    val ahom_apply : ('a,'b,'c,'d,'e) exp_hom -> ('a,'e) annargs -> 'd
+    val att_ehom : ('a,'b) att_exp_hom
+                   -> {anullpar:'a -> 'a * ('c,'d) formals,
+                       apairpar:'a
+                                -> (string * 'b UnionFind.UF)
+                                   * ('a * ('a,'b) formals)
+                                   -> 'a * ('a,'b) formals,
+                       assign:'e
+                              -> (string * 'b UnionFind.UF)
+                                 * ('a * ('a,'b) exp)
+                                 -> 'a * ('a,'b) exp,
+                       avarpar:'a
+                               -> string * 'b UnionFind.UF
+                                  -> 'a * ('f,'b) formals,
+                       call:'a
+                            -> ('a * ('a,'g) exp) * ('a * ('a,'g) args)
+                               -> 'a * ('a,'g) exp,
+                       empty:'a -> 'a * ('h,'i) exp,
+                       ifexp:'a
+                             -> ('a * ('a,'j) exp) * ('a * ('a,'j) exp)
+                                * ('a * ('a,'j) exp)
+                                -> 'a * ('a,'j) exp,
+                       lambda:'a
+                              -> ('a * ('a,'k) formals) * ('a * ('a,'k) exp)
+                                 -> 'a * ('a,'k) exp,
+                       literal:'a
+                               -> 'a * 'a SchemeDatum.datum
+                                  -> 'a * ('a,'l) exp,
+                       nullarg:'a -> 'a * ('m,'n) args,
+                       pairarg:'a
+                               -> ('a * ('a,'o) exp) * ('a * ('a,'o) args)
+                                  -> 'a * ('a,'o) args,
+                       variable:'a
+                                -> string * 'b UnionFind.UF
+                                   -> 'a * ('p,'b) exp}
+    val dat2annexp : ('a,'b,'c,'d,'1e) exp_hom
+                     -> (unit -> 'a) * (string -> '1e)
+                        -> 'a SchemeDatum.anndatum -> 'b
+    val ehom : {anullpar:'a -> 'a * ('b,'c) formals,
+                apairpar:'d
+                         -> 'e variable * ('f,'e) annformals
+                            -> 'd * ('f,'e) formals,
+                assign:'g -> 'h variable * ('i,'h) annexp -> 'g * ('i,'h) exp,
+                avarpar:'j -> 'k variable -> 'j * ('l,'k) formals,
+                call:'m
+                     -> ('n,'o) annexp * ('n,'o) annargs -> 'm * ('n,'o) exp,
+                empty:'p -> 'p * ('q,'r) exp,
+                ifexp:'s
+                      -> ('t,'u) annexp * ('t,'u) annexp * ('t,'u) annexp
+                         -> 's * ('t,'u) exp,
+                lambda:'v
+                       -> ('w,'x) annformals * ('w,'x) annexp
+                          -> 'v * ('w,'x) exp,
+                literal:'y -> 'z SchemeDatum.anndatum -> 'y * ('z,'ba) exp,
+                nullarg:'bb -> 'bb * ('bc,'bd) args,
+                pairarg:'be
+                        -> ('bf,'bg) annexp * ('bf,'bg) annargs
+                           -> 'be * ('bf,'bg) args,
+                variable:'bh -> 'bi variable -> 'bh * ('bj,'bi) exp}
+    val ehom_apply : ('a,'b,'c,'d,'e) exp_hom -> ('a,'e) annexp -> 'b
+    val fhom_apply : ('a,'b,'c,'d,'e) exp_hom -> ('a,'e) annformals -> 'c
+    val gen_default_att : ('a -> 'b) -> 'c -> 'a -> 'c * 'b
+    val parse : unit -> (unit,unit) annexp
+  end
+val it = () : unit
+- 
+- use e;
+[opening exp.sml]
+exp.sml:170.3-190.6 Error: expression and constraint don't agree (type mismatch)
+  expression: {anullpar:'aU -> 'aU * ('aU,'bU) formals,
+               apairpar:'aU
+                        -> (string * 'bU UF) * ('aU * ('aU,'bU) formals)
+                           -> 'aU * ('aU,'bU) formals,
+               assign:'Z
+                      -> (string * 'bU UF) * ('aU * ('aU,'bU) exp)
+                         -> 'aU * ('aU,'bU) exp,
+               avarpar:'aU -> string * 'bU UF -> 'aU * ('Y,'bU) formals,
+               call:'aU
+                    -> ('aU * ('aU,'X) exp) * ('aU * ('aU,'X) args)
+                       -> 'aU * ('aU,'X) exp, empty:'aU -> 'aU * ('W,'V) exp,
+               ifexp:'aU
+                     -> ('aU * ('aU,'U) exp) * ('aU * ('aU,'U) exp)
+                        * ('aU * ('aU,'U) exp)
+                        -> 'aU * ('aU,'U) exp,
+               lambda:'aU
+                      -> ('aU * ('aU,'T) formals) * ('aU * ('aU,'T) exp)
+                         -> 'aU * ('aU,'T) exp,
+               literal:'aU -> 'aU * 'aU datum -> 'aU * ('aU,'S) exp,
+               nullarg:'aU -> 'aU * ('R,'Q) args,
+               pairarg:'aU
+                       -> ('aU * ('aU,'P) exp) * ('aU * ('aU,'P) args)
+                          -> 'aU * ('aU,'P) args,
+               variable:'aU -> string * 'bU UF -> 'aU * ('O,'bU) exp}
+  constraint: ('aU,('aU,'bU) annexp,('aU,'bU) annformals,('aU,'bU) annargs,
+               'bU variable) exp_hom
+  in expression:
+    {empty=(fn a => (<exp> <exp> a,EMPTY)),
+     literal=(fn a => (fn ad as <pat> => (<exp>,<exp>))),
+     variable=(fn a => (fn v as <pat> => (<exp>,<exp>))),
+     call=(fn a => (fn arg as <pat> => (<exp>,<exp>))),
+     lambda=(fn a => (fn arg as <pat> => (<exp>,<exp>))),
+- 
+- 
+     ifexp=(fn a => (fn arg as <pat> => (<exp>,<exp>))),
+     assign=(fn a => (fn arg as <pat> => (<exp>,<exp>))),
+     pairarg=(fn a => (fn arg as <pat> => (<exp>,<exp>))),
+     nullarg=(fn a => (<exp> <exp> a,NULLARG)),
+     avarpar=(fn a => (fn v as <pat> => (<exp>,<exp>))),
+     apairpar=(fn a => (fn arg as <pat> => (<exp>,<exp>))),
+     anullpar=(fn a => (<exp> <exp> a,ANULLPAR))}
+
+- use e;
+[opening exp.sml]
+exp.sml:169.3-189.6 Error: expression and constraint don't agree (type mismatch)
+  expression: {anullpar:'aU -> 'aU * ('aU,'bU) formals,
+               apairpar:'aU
+                        -> (string * 'bU) * ('aU * ('aU,'bU) formals)
+                           -> 'aU * ('aU,'bU) formals,
+               assign:'Z
+                      -> (string * 'bU) * ('aU * ('aU,'bU) exp)
+                         -> 'aU * ('aU,'bU) exp,
+               avarpar:'aU -> string * 'bU -> 'aU * ('Y,'bU) formals,
+               call:'aU
+                    -> ('aU * ('aU,'X) exp) * ('aU * ('aU,'X) args)
+                       -> 'aU * ('aU,'X) exp, empty:'aU -> 'aU * ('W,'V) exp,
+               ifexp:'aU
+                     -> ('aU * ('aU,'U) exp) * ('aU * ('aU,'U) exp)
+                        * ('aU * ('aU,'U) exp)
+                        -> 'aU * ('aU,'U) exp,
+               lambda:'aU
+                      -> ('aU * ('aU,'T) formals) * ('aU * ('aU,'T) exp)
+                         -> 'aU * ('aU,'T) exp,
+               literal:'aU -> 'aU * 'aU datum -> 'aU * ('aU,'S) exp,
+               nullarg:'aU -> 'aU * ('R,'Q) args,
+               pairarg:'aU
+                       -> ('aU * ('aU,'P) exp) * ('aU * ('aU,'P) args)
+                          -> 'aU * ('aU,'P) args,
+               variable:'aU -> string * 'bU -> 'aU * ('O,'bU) exp}
+  constraint: ('aU,('aU,'bU) annexp,('aU,'bU) annformals,('aU,'bU) annargs,
+               'bU variable) exp_hom
+  in expression:
+    {empty=(fn a => (<exp> <exp> a,EMPTY)),
+     literal=(fn a => (fn ad as <pat> => (<exp>,<exp>))),
+     variable=(fn a => (fn v as <pat> => (<exp>,<exp>))),
+     call=(fn a => (fn arg as <pat> => (<exp>,<exp>))),
+     lambda=(fn a => (fn arg as <pat> => (<exp>,<exp>))),
+     ifexp=(fn a => (fn arg as <pat> => (<exp>,<exp>))),
+     assign=(fn a => (fn arg as <pat> => (<exp>,<exp>))),
+     pairarg=(fn a => (fn arg as <pat> => (<exp>,<exp>))),
+     nullarg=(fn a => (<exp> <exp> a,NULLARG)),
+     avarpar=(fn a => (fn v as <pat> => (<exp>,<exp>))),
+     apairpar=(fn a => (fn arg as <pat> => (<exp>,<exp>))),
+     anullpar=(fn a => (<exp> <exp> a,ANULLPAR))}
+- use e;
+[opening exp.sml]
+structure KernelExpression :
+  sig
+    eqtype ('a,'b) annargs
+    eqtype ('a,'b) annexp
+    eqtype ('a,'b) annformals
+    datatype ('a,'b) args
+      con NULLARG : ('a,'b) args
+      con PAIRARG : ('a,'b) annexp * ('a,'b) annargs -> ('a,'b) args
+    type ('a,'b) att_exp_hom
+    datatype ('a,'b) definition
+      con BEGINDEF : ('a,'b) definition list -> ('a,'b) definition
+      con COMMAND : ('a,'b) annexp -> ('a,'b) definition
+      con VARDEF : 'b variable * ('a,'b) annexp -> ('a,'b) definition
+    datatype ('a,'b) exp
+      con ASSIGN : 'b variable * ('a,'b) annexp -> ('a,'b) exp
+      con CALL : ('a,'b) annexp * ('a,'b) annargs -> ('a,'b) exp
+      con EMPTY : ('a,'b) exp
+      con IF : ('a,'b) annexp * ('a,'b) annexp * ('a,'b) annexp -> ('a,'b) exp
+      con LAMBDA : ('a,'b) annformals * ('a,'b) annexp -> ('a,'b) exp
+      con LITERAL : 'a SchemeDatum.anndatum -> ('a,'b) exp
+      con VARIABLE : 'b variable -> ('a,'b) exp
+    type ('a,'b,'c,'d,'e) exp_hom
+    datatype ('a,'b) formals
+      con ANULLPAR : ('a,'b) formals
+      con APAIRPAR : 'b variable * ('a,'b) annformals -> ('a,'b) formals
+      con AVARPAR : 'b variable -> ('a,'b) formals
+    eqtype 'a variable
+    exception ParseError of string
+    val ahom_apply : ('a,'b,'c,'d,'e) exp_hom -> ('a,'e) annargs -> 'd
+    val att_ehom : ('a,'b) att_exp_hom
+                   -> ('a,('a,'b) annexp,('a,'b) annformals,('a,'b) annargs,
+                       'b) exp_hom
+    val dat2annexp : ('a,'b,'c,'d,'1e) exp_hom
+                     -> (unit -> 'a) * (string -> '1e)
+                        -> 'a SchemeDatum.anndatum -> 'b
+    val ehom : {anullpar:'a -> 'a * ('b,'c) formals,
+                apairpar:'d
+                         -> 'e variable * ('f,'e) annformals
+                            -> 'd * ('f,'e) formals,
+                assign:'g -> 'h variable * ('i,'h) annexp -> 'g * ('i,'h) exp,
+                avarpar:'j -> 'k variable -> 'j * ('l,'k) formals,
+                call:'m
+                     -> ('n,'o) annexp * ('n,'o) annargs -> 'm * ('n,'o) exp,
+                empty:'p -> 'p * ('q,'r) exp,
+                ifexp:'s
+                      -> ('t,'u) annexp * ('t,'u) annexp * ('t,'u) annexp
+                         -> 's * ('t,'u) exp,
+                lambda:'v
+                       -> ('w,'x) annformals * ('w,'x) annexp
+                          -> 'v * ('w,'x) exp,
+                literal:'y -> 'z SchemeDatum.anndatum -> 'y * ('z,'ba) exp,
+                nullarg:'bb -> 'bb * ('bc,'bd) args,
+                pairarg:'be
+                        -> ('bf,'bg) annexp * ('bf,'bg) annargs
+                           -> 'be * ('bf,'bg) args,
+                variable:'bh -> 'bi variable -> 'bh * ('bj,'bi) exp}
+    val ehom_apply : ('a,'b,'c,'d,'e) exp_hom -> ('a,'e) annexp -> 'b
+    val fhom_apply : ('a,'b,'c,'d,'e) exp_hom -> ('a,'e) annformals -> 'c
+    val gen_default_att : ('a -> 'b) -> 'c -> 'a -> 'c * 'b
+    val parse : unit -> (unit,unit) annexp
+  end
+val it = () : unit
+- sig
+= datatype T = U of V
+withtype V = T * T;
+std_in:10.1 Error: syntax error found at SIG
+- std_in:11.6 Error: unbound variable or constructor: T
+std_in:11.2 Error: unbound variable or constructor: T
+std_in:0.0-0.0 Error: unbound variable or constructor: ithtype
+std_in:0.0 Error: unbound variable or constructor: V
+std_in:11.4 Error: overloaded variable cannot be resolved: *
+- signature S =
+= sig datatype T = U of V 
+withtype V = T * T
+end;
+= std_in:13.1 Warning: unnecessary `op'
+std_in:13.1 Error: syntax error found at WITHTYPE
+- std_in:0.0-0.0 Error: unbound variable or constructor: nd
+- use "datum.sig";
+[opening datum.sig]
+signature SCHEMEDATUM =
+  sig
+    datatype ('a,'b) datum_hom
+      con DHOM : {booldat:'a -> bool -> 'b, chardat:'a -> string -> 'b,
+                  nildat:'a -> 'b, numbdat:'a -> string -> 'b,
+                  pairdat:'a -> 'b * 'b -> 'b, stridat:'a -> string -> 'b,
+                  symbdat:'a -> string -> 'b, vectdat:'a -> 'b list -> 'b}
+                 -> ('a,'b) datum_hom
+    datatype 'a datum
+      con BOOLDAT : bool -> 'a datum
+      con CHARDAT : string -> 'a datum
+      con NILDAT : 'a datum
+      con NUMBDAT : string -> 'a datum
+      con PAIRDAT : 'a anndatum * 'a anndatum -> 'a datum
+      con STRIDAT : string -> 'a datum
+      con SYMBDAT : string -> 'a datum
+      con VECTDAT : 'a anndatum list -> 'a datum
+    datatype 'a anndatum
+      con DATUM : 'a * 'a datum -> 'a anndatum
+    val read_datum : ('a,'b) datum_hom -> instream -> 'b
+    val read : instream -> 'a anndatum
+    val apply_dhom : ('a,'b) datum_hom -> 'a anndatum -> 'b
+  end
+val it = () : unit
+- functor (D: SCHEMEDATUM) =
+std_in:14.9 Error: syntax error found at LPAREN
+- struct type int end;
+std_in:0.0 Error: syntax error found at STRUCT
+- functor F (D: SCHEMEDATUM) = struct type int end;
+std_in:14.29 Error: syntax error found at END
+- use d;
+std_in:0.0 Error: unbound variable or constructor: d
+- val d = "datum.sig";
+val d = "datum.sig" : string
+- use d;
+[opening datum.sig]
+signature SCHEMEDATUM =
+  sig
+    datatype ('a,'b) datum_hom
+      con DHOM : {booldat:'a -> bool -> 'b, chardat:'a -> string -> 'b,
+                  nildat:'a -> 'b, numbdat:'a -> string -> 'b,
+                  pairdat:'a -> 'b * 'b -> 'b, stridat:'a -> string -> 'b,
+                  symbdat:'a -> string -> 'b, vectdat:'a -> 'b list -> 'b}
+                 -> ('a,'b) datum_hom
+    datatype 'a datum
+      con BOOLDAT : bool -> 'a datum
+      con CHARDAT : string -> 'a datum
+      con NILDAT : 'a datum
+      con NUMBDAT : string -> 'a datum
+      con PAIRDAT : 'a anndatum * 'a anndatum -> 'a datum
+      con STRIDAT : string -> 'a datum
+      con SYMBDAT : string -> 'a datum
+      con VECTDAT : 'a anndatum list -> 'a datum
+    datatype 'a anndatum
+      con DATUM : 'a datum * 'a -> 'a anndatum
+    val apply_dhom : ('a,'b) datum_hom -> 'a anndatum -> 'b
+    val read_datum : (unit -> 'a) -> instream -> 'a anndatum
+  end
+val it = () : unit
+- val e = "exp.sig";
+val e = "exp.sig" : string
+- use e;
+[opening exp.sig]
+signature KERNELEXP =
+  sig
+    type 'a anndatum
+    datatype ('a,'b,'c,'d,'e,'f) exp_hom
+      con EHOM : {anullpar:'a -> 'd, apairpar:'a -> 'f * 'd -> 'd,
+                  assign:'a -> 'f * 'c -> 'c, avarpar:'a -> 'f -> 'd,
+                  call:'a -> 'c * 'e -> 'c, empty:'a -> 'c,
+                  ifexp:'a -> 'c * 'c * 'c -> 'c, lambda:'a -> 'd * 'c -> 'c,
+                  literal:'a -> 'b -> 'c, nullarg:'a -> 'e,
+                  pairarg:'a -> 'c * 'e -> 'e, variable:'a -> 'f -> 'c}
+                 -> ('a,'b,'c,'d,'e,'f) exp_hom
+    datatype 'a variable
+      con VAR : string * 'a -> 'a variable
+    datatype ('a,'b) exp
+      con ASSIGN : 'b variable * ('a,'b) annexp -> ('a,'b) exp
+      con CALL : ('a,'b) annexp * ('a,'b) annargs -> ('a,'b) exp
+      con IF : ('a,'b) annexp * ('a,'b) annexp * ('a,'b) annexp -> ('a,'b) exp
+      con LAMBDA : ('a,'b) annformals * ('a,'b) annexp -> ('a,'b) exp
+      con LITERAL : 'a anndatum -> ('a,'b) exp
+      con NOEXP : ('a,'b) exp
+      con VARIABLE : 'b variable -> ('a,'b) exp
+    datatype ('a,'b) annexp
+      con EXP : ('a,'b) exp * 'a -> ('a,'b) annexp
+    datatype ('a,'b) args
+      con NULLARG : ('a,'b) args
+      con PAIRARG : ('a,'b) annexp * ('a,'b) annargs -> ('a,'b) args
+    datatype ('a,'b) annargs
+      con ARGS : ('a,'b) args * 'a -> ('a,'b) annargs
+    datatype ('a,'b) formals
+      con ANULLPAR : ('a,'b) formals
+      con APAIRPAR : 'b variable * ('a,'b) annformals -> ('a,'b) formals
+      con AVARPAR : 'b variable -> ('a,'b) formals
+    datatype ('a,'b) annformals
+      con FORMALS : ('a,'b) formals * 'a -> ('a,'b) annformals
+    val apply_ehom : ('d,'a,'f,'b,'c,'e) exp_hom -> ('d,'e) annexp -> 'f
+    val dat2exp : (unit -> 'a) * (unit -> 'b) -> 'a anndatum -> ('a,'b) annexp
+    val read_exp : (unit -> 'a) * (unit -> 'b) -> instream -> ('a,'b) annexp
+  end
+val it = () : unit
+- use "datum.sig";
+[opening datum.sig]
+signature SCHEMEDATUM =
+  sig
+    datatype ('a,'b) datum_hom
+      con DHOM : {booldat:'a -> bool -> 'b, chardat:'a -> string -> 'b,
+                  nildat:'a -> 'b, numbdat:'a -> string -> 'b,
+                  pairdat:'a -> 'b * 'b -> 'b, stridat:'a -> string -> 'b,
+                  symbdat:'a -> string -> 'b, vectdat:'a -> 'b list -> 'b}
+                 -> ('a,'b) datum_hom
+    datatype 'a datum
+      con BOOLDAT : bool -> 'a datum
+      con CHARDAT : string -> 'a datum
+      con NILDAT : 'a datum
+      con NUMBDAT : string -> 'a datum
+      con PAIRDAT : 'a anndatum * 'a anndatum -> 'a datum
+      con STRIDAT : string -> 'a datum
+      con SYMBDAT : string -> 'a datum
+      con VECTDAT : 'a anndatum list -> 'a datum
+    datatype 'a anndatum
+      con DATUM : 'a datum * 'a -> 'a anndatum
+    val apply_dhom : ('a,'b) datum_hom -> 'a anndatum -> 'b
+    val read_datum : (unit -> 'a) -> instream -> 'a anndatum
+  end
+val it = () : unit
+- functor (D:SCHEMEDATUM) = structure struct type T = int end end;
+std_in:19.9 Error: syntax error found at LPAREN
+- functor () = struct end;
+std_in:0.0 Error: syntax error found at LPAREN
+- val F = functor () = struct end;
+std_in:0.0 Error: syntax error found at FUNCTOR
+- functor F () = struct end;
+functor F : <sig>
+- functor F (D:SCHEMEDATUM) = struct type T = int end;
+functor F : <sig>
+- use "exp.sig";
+[opening exp.sig]
+signature KERNELEXP =
+  sig
+    type 'a anndatum
+    datatype ('a,'b,'c,'d,'e,'f) exp_hom
+
+[Major collection... 45% used (2990164/6627536), 3850 msec]
+      con EHOM : {anullpar:'a -> 'd, apairpar:'a -> 'f * 'd -> 'd,
+                  assign:'a -> 'f * 'c -> 'c, avarpar:'a -> 'f -> 'd,
+                  call:'a -> 'c * 'e -> 'c, empty:'a -> 'c,
+                  ifexp:'a -> 'c * 'c * 'c -> 'c, lambda:'a -> 'd * 'c -> 'c,
+                  literal:'a -> 'b -> 'c, nullarg:'a -> 'e,
+                  pairarg:'a -> 'c * 'e -> 'e, variable:'a -> 'f -> 'c}
+                 -> ('a,'b,'c,'d,'e,'f) exp_hom
+    datatype 'a variable
+      con VAR : string * 'a -> 'a variable
+    datatype ('a,'b) exp
+      con ASSIGN : 'b variable * ('a,'b) annexp -> ('a,'b) exp
+      con CALL : ('a,'b) annexp * ('a,'b) annargs -> ('a,'b) exp
+      con IF : ('a,'b) annexp * ('a,'b) annexp * ('a,'b) annexp -> ('a,'b) exp
+      con LAMBDA : ('a,'b) annformals * ('a,'b) annexp -> ('a,'b) exp
+      con LITERAL : 'a anndatum -> ('a,'b) exp
+      con NOEXP : ('a,'b) exp
+      con VARIABLE : 'b variable -> ('a,'b) exp
+    datatype ('a,'b) annexp
+      con EXP : ('a,'b) exp * 'a -> ('a,'b) annexp
+    datatype ('a,'b) args
+      con NULLARG : ('a,'b) args
+      con PAIRARG : ('a,'b) annexp * ('a,'b) annargs -> ('a,'b) args
+    datatype ('a,'b) annargs
+      con ARGS : ('a,'b) args * 'a -> ('a,'b) annargs
+    datatype ('a,'b) formals
+      con ANULLPAR : ('a,'b) formals
+      con APAIRPAR : 'b variable * ('a,'b) annformals -> ('a,'b) formals
+      con AVARPAR : 'b variable -> ('a,'b) formals
+    datatype ('a,'b) annformals
+      con FORMALS : ('a,'b) formals * 'a -> ('a,'b) annformals
+    val apply_ehom : ('d,'a,'f,'b,'c,'e) exp_hom -> ('d,'e) annexp -> 'f
+    val dat2exp : (unit -> 'a) * (unit -> 'b) -> 'a anndatum -> ('a,'b) annexp
+    val read_exp : (unit -> 'a) * (unit -> 'b) -> instream -> ('a,'b) annexp
+  end
+val it = () : unit
+- functor F (D:SCHEMEDATUM, E:KERNELEXP) = struct end;
+std_in:22.25 Error: syntax error found at COMMA
+- functor F (D:SCHEMEDATUM
+             E: KERNELEXP) = struct end;
+= std_in:23.14 Error: syntax error found at ID
+- functor F (D: SCHEMEDATUM; E: KERNELEXP) = struct end;
+std_in:23.1 Error: syntax error found at SEMICOLON
+- functor F (D: SCHEMEDATUM and
+             E: KERNELEXP) = struct end;
+= std_in:23.2 Error: syntax error found at AND
+- functor F (D: SCHEMEDATUM with E: KERNELEXP) = struct end;
+std_in:0.0 Error: syntax error found at WITH
+- functor F (struct D : SCHEMEDATUM
+                    E : KERNELEXP end) = struct end;
+std_in:0.0 Error: syntax error found at STRUCT
+- std_in:24.4 Error: syntax error found at END
+functor F (structure D :  SCHEMEDATUM and
+           structure E : KERNELEXP) = struct end;
+           
+- std_in:0.0 Error: syntax error found at STRUCTURE
+- std_in:24.4 Error: syntax error found at RPAREN
+- - use "kernel.sml";
+[opening kernel.sml]
+kernel.sml:8.3-8.6 Error: syntax error: replacing TYPE with DATATYPE
+kernel.sml:14.31-14.35 Error: unbound type constructor: atype
+kernel.sml:14.23-14.27 Error: unbound type constructor: atype
+- open KernelTypes;
+std_in:0.0-25.5 Error: unbound structure: KernelTypes
+- use "types5.sml";
+[opening types5.sml]
+structure KernelTypes :
+  sig
+    datatype attributes
+      con ATT : {equivptr:atype SchemeGeneral.Option ref, interpreted:bool ref,
+                 neg:bool ref, pos:bool ref, preds:atype list ref,
+                 succs:atype list ref}
+                -> attributes
+    eqtype atype
+    datatype type_tag
+      con BOOL : type_tag
+      con FUNC : type_tag
+      con NIL : type_tag
+      con PAIR : type_tag
+    datatype utype
+      con DYN : (type_tag -> atype) -> utype
+      con SIMPLE : type_tag * atype list -> utype
+      con VAR : int -> utype
+    val alias : atype * atype -> unit
+    val attributes : ('a * attributes) UnionFind.UF
+                     -> {equivptr:atype SchemeGeneral.Option ref,
+                         interpreted:bool ref, neg:bool ref, pos:bool ref,
+                         preds:atype list ref, succs:atype list ref}
+    val ecr : atype -> atype
+    val equiv : atype * atype -> unit
+    val foreach : ('a -> 'b) -> 'a list -> unit
+    val get : ({equivptr:atype SchemeGeneral.Option ref, interpreted:bool ref,
+                neg:bool ref, pos:bool ref, preds:atype list ref,
+                succs:atype list ref}
+               -> 'a)
+              -> ('b * attributes) UnionFind.UF -> 'a
+    val interpret : atype -> unit
+    val make_attrib : unit -> attributes
+    val make_dyn_type : (utype * attributes) UnionFind.UF list
+                        -> (utype * attributes) UnionFind.UF
+    val make_type : type_tag * atype list -> (utype * attributes) UnionFind.UF
+    val new_typevar : unit -> (utype * attributes) UnionFind.UF
+    val pred_succ : (utype * attributes) UnionFind.UF
+                    * (utype * attributes) UnionFind.UF
+                    -> unit
+    val process : (atype * atype) list * (utype * attributes) UnionFind.UF list
+                  -> unit
+    val propagate : (utype * attributes) UnionFind.UF list * atype list -> unit
+    val type_tags : type_tag list
+    val unify : atype * atype -> unit
+    val utype : atype -> utype
+    val zip : ('a * 'b -> 'c) -> 'a list * 'b list -> unit
+  end
+val it = () : unit
+- open KernelTypes;
+open KernelTypes
+val ecr = fn : atype -> atype
+val get = fn
+  : ({equivptr:atype SchemeGeneral.Option ref, interpreted:bool ref,
+      neg:bool ref, pos:bool ref, preds:atype list ref, succs:atype list ref}
+     -> 'a)
+    -> ('b * attributes) UnionFind.UF -> 'a
+val interpret = fn : atype -> unit
+val alias = fn : atype * atype -> unit
+val equiv = fn : atype * atype -> unit
+val unify = fn : atype * atype -> unit
+val type_tags = [FUNC,BOOL,NIL,PAIR] : type_tag list
+val propagate = fn
+  : (utype * attributes) UnionFind.UF list * atype list -> unit
+val make_dyn_type = fn
+  : (utype * attributes) UnionFind.UF list -> (utype * attributes) UnionFind.UF
+val new_typevar = fn : unit -> (utype * attributes) UnionFind.UF
+val utype = fn : atype -> utype
+val zip = fn : ('a * 'b -> 'c) -> 'a list * 'b list -> unit
+val process = fn
+  : (atype * atype) list * (utype * attributes) UnionFind.UF list -> unit
+val foreach = fn : ('a -> 'b) -> 'a list -> unit
+val pred_succ = fn
+  : (utype * attributes) UnionFind.UF * (utype * attributes) UnionFind.UF
+    -> unit
+val make_attrib = fn : unit -> attributes
+val make_type = fn : type_tag * atype list -> (utype * attributes) UnionFind.UF
+val attributes = fn
+  : ('a * attributes) UnionFind.UF
+    -> {equivptr:atype SchemeGeneral.Option ref, interpreted:bool ref,
+        neg:bool ref, pos:bool ref, preds:atype list ref, succs:atype list ref}
+- use "kernel.sml";
+[opening kernel.sml]
+functor Constraints : <sig>
+val it = () : unit
+- val S = Constraints SchemeDatum;
+std_in:28.9-28.19 Error: unbound variable or constructor: Constraints
+std_in:28.21-28.31 Error: unbound variable or constructor: SchemeDatum
+Constraints;
+- std_in:0.0-0.0 Error: unbound variable or constructor: onstraints
+- use "kernel.sml";
+[opening kernel.sml]
+functor Constraints : <sig>
+val it = () : unit
+- Constraints;
+std_in:29.1-29.11 Error: unbound variable or constructor: Constraints
+- struct S = Constraints SchemeDatum end;
+std_in:0.0 Error: syntax error found at STRUCT
+- structure struct S = Constraints SchemeDatum end;
+std_in:0.0 Error: syntax error found at STRUCT
+- structure S = Constraints SchemeDatum;
+std_in:29.9 Error: syntax error found at ID
+- SchemeDatum;
+std_in:0.0-0.0 Error: unbound variable or constructor: SchemeDatum
+- and;
+std_in:0.0 Error: syntax error found at AND
+- AND;
+std_in:0.0-0.0 Error: unbound variable or constructor: AND
+- minus;
+std_in:0.0-0.0 Error: unbound variable or constructor: minus
+- 
+- 
+- - use "datum.sig";
+[opening datum.sig]
+signature SCHEMEDATUM =
+  sig
+    datatype ('a,'b) datum_hom
+      con DHOM : {booldat:'a -> bool -> 'b, chardat:'a -> string -> 'b,
+                  nildat:'a -> 'b, numbdat:'a -> string -> 'b,
+                  pairdat:'a -> 'b * 'b -> 'b, stridat:'a -> string -> 'b,
+                  symbdat:'a -> string -> 'b, vectdat:'a -> 'b list -> 'b}
+                 -> ('a,'b) datum_hom
+    datatype 'a datum
+      con BOOLDAT : bool -> 'a datum
+      con CHARDAT : string -> 'a datum
+      con NILDAT : 'a datum
+      con NUMBDAT : string -> 'a datum
+      con PAIRDAT : 'a anndatum * 'a anndatum -> 'a datum
+      con STRIDAT : string -> 'a datum
+      con SYMBDAT : string -> 'a datum
+      con VECTDAT : 'a anndatum list -> 'a datum
+    datatype 'a anndatum
+      con DATUM : 'a datum * 'a -> 'a anndatum
+    val apply_dhom : ('a,'b) datum_hom -> 'a anndatum -> 'b
+    val read_datum : (unit -> 'a) -> instream -> 'a anndatum
+  end
+val it = () : unit
+- use "datum.sml";
+[opening datum.sml]
+
+[Major collection... 45% used (3048748/6663468), 4000 msec]
+datum.sml:123.22-123.33 Error: unbound variable or constructor: IllegalInput
+datum.sml:433.39-433.41 Error: unbound variable or constructor: EOF
+- use "datum.sig";
+[opening datum.sig]
+signature SCHEMEDATUM =
+  sig
+    datatype ('a,'b) datum_hom
+      con DHOM : {booldat:'a -> bool -> 'b, chardat:'a -> string -> 'b,
+                  nildat:'a -> 'b, numbdat:'a -> string -> 'b,
+                  pairdat:'a -> 'b * 'b -> 'b, stridat:'a -> string -> 'b,
+                  symbdat:'a -> string -> 'b, vectdat:'a -> 'b list -> 'b}
+                 -> ('a,'b) datum_hom
+    datatype 'a datum
+      con BOOLDAT : bool -> 'a datum
+      con CHARDAT : string -> 'a datum
+      con NILDAT : 'a datum
+      con NUMBDAT : string -> 'a datum
+      con PAIRDAT : 'a anndatum * 'a anndatum -> 'a datum
+      con STRIDAT : string -> 'a datum
+      con SYMBDAT : string -> 'a datum
+      con VECTDAT : 'a anndatum list -> 'a datum
+    datatype 'a anndatum
+      con DATUM : 'a datum * 'a -> 'a anndatum
+    val apply_dhom : ('a,'b) datum_hom -> 'a anndatum -> 'b
+    exception ReadError of string * string
+    exception EOF
+    val read_datum : (unit -> 'a) -> instream -> 'a anndatum
+  end
+val it = () : unit
+- use "datum.sml";
+[opening datum.sml]
+structure SchemeDatum : SCHEMEDATUM
+val it = () : unit
+- use "exp.sig";
+[opening exp.sig]
+signature KERNELEXP =
+  sig
+    datatype ('a,'b,'c,'d,'e,'f) exp_hom
+      con EHOM : {anullpar:'a -> 'd, apairpar:'a -> 'f * 'd -> 'd,
+                  assign:'a -> 'f * 'c -> 'c, avarpar:'a -> 'f -> 'd,
+                  call:'a -> 'c * 'e -> 'c, empty:'a -> 'c,
+                  ifexp:'a -> 'c * 'c * 'c -> 'c, lambda:'a -> 'd * 'c -> 'c,
+                  literal:'a -> 'b -> 'c, nullarg:'a -> 'e,
+                  pairarg:'a -> 'c * 'e -> 'e, variable:'a -> 'f -> 'c}
+                 -> ('a,'b,'c,'d,'e,'f) exp_hom
+    type 'a anndatum
+    datatype 'a variable
+      con VAR : string * 'a -> 'a variable
+    datatype ('a,'b) exp
+      con ASSIGN : 'b variable * ('a,'b) annexp -> ('a,'b) exp
+      con CALL : ('a,'b) annexp * ('a,'b) annargs -> ('a,'b) exp
+      con IF : ('a,'b) annexp * ('a,'b) annexp * ('a,'b) annexp -> ('a,'b) exp
+      con LAMBDA : ('a,'b) annformals * ('a,'b) annexp -> ('a,'b) exp
+      con LITERAL : 'a anndatum -> ('a,'b) exp
+      con NOEXP : ('a,'b) exp
+      con VARIABLE : 'b variable -> ('a,'b) exp
+    datatype ('a,'b) annexp
+      con EXP : ('a,'b) exp * 'a -> ('a,'b) annexp
+    datatype ('a,'b) args
+      con NULLARG : ('a,'b) args
+      con PAIRARG : ('a,'b) annexp * ('a,'b) annargs -> ('a,'b) args
+    datatype ('a,'b) annargs
+      con ARGS : ('a,'b) args * 'a -> ('a,'b) annargs
+    datatype ('a,'b) formals
+      con ANULLPAR : ('a,'b) formals
+      con APAIRPAR : 'b variable * ('a,'b) annformals -> ('a,'b) formals
+      con AVARPAR : 'b variable -> ('a,'b) formals
+    datatype ('a,'b) annformals
+      con FORMALS : ('a,'b) formals * 'a -> ('a,'b) annformals
+    val apply_ehom : ('d,'a,'f,'b,'c,'e) exp_hom -> ('d,'e) annexp -> 'f
+    exception ParseError of string
+    val dat2exp : (unit -> 'a) * (unit -> 'b) -> 'a anndatum -> ('a,'b) annexp
+    val read_exp : (unit -> 'a) * (unit -> 'b) -> instream -> ('a,'b) annexp
+  end
+val it = () : unit
+- use "exp.sml";
+[opening exp.sml]
+exp.sml:1.11-285.3 Error: value type in structure doesn't match signature spec
+    name: EHOM
+  spec:   {anullpar:'a -> 'd, apairpar:'a -> 'f * 'd -> 'd,
+           assign:'a -> 'f * 'c -> 'c, avarpar:'a -> 'f -> 'd,
+           call:'a -> 'c * 'e -> 'c, empty:'a -> 'c,
+           ifexp:'a -> 'c * 'c * 'c -> 'c, lambda:'a -> 'd * 'c -> 'c,
+           literal:'a -> 'b -> 'c, nullarg:'a -> 'e,
+           pairarg:'a -> 'c * 'e -> 'e, variable:'a -> 'f -> 'c}
+          -> ('a,'b,'c,'d,'e,'f) exp_hom
+  actual: {anullpar:'a -> 'd, apairpar:'a -> 'f * 'd -> 'd,
+           assign:'a -> 'f * 'c -> 'c, avarpar:'a -> 'f -> 'd,
+           call:'a -> 'c * 'e -> 'c, ifexp:'a -> 'c * 'c * 'c -> 'c,
+           lambda:'a -> 'd * 'c -> 'c, literal:'a -> 'b -> 'c, noexp:'a -> 'c,
+           nullarg:'a -> 'e, pairarg:'a -> 'c * 'e -> 'e,
+           variable:'a -> 'f -> 'c}
+          -> ('a,'b,'c,'d,'e,'f) exp_hom
+exp.sml:1.11-285.3 Error: value type in structure doesn't match signature spec
+    name: apply_ehom
+  spec:   ('d,'a,'f,'b,'c,'e) exp_hom -> ('d,'e) annexp -> 'f
+  actual: ('a,'a anndatum,'b,'c,'d,'e variable) exp_hom -> ('a,'e) annexp -> 'b
+- use "exp.sig";
+[opening exp.sig]
+signature KERNELEXP =
+  sig
+    datatype ('a,'b,'c,'d,'e,'f) exp_hom
+      con EHOM : {anullpar:'a -> 'd, apairpar:'a -> 'f * 'd -> 'd,
+                  assign:'a -> 'f * 'c -> 'c, avarpar:'a -> 'f -> 'd,
+                  call:'a -> 'c * 'e -> 'c, ifexp:'a -> 'c * 'c * 'c -> 'c,
+                  lambda:'a -> 'd * 'c -> 'c, literal:'a -> 'b -> 'c,
+                  noexp:'a -> 'c, nullarg:'a -> 'e,
+                  pairarg:'a -> 'c * 'e -> 'e, variable:'a -> 'f -> 'c}
+                 -> ('a,'b,'c,'d,'e,'f) exp_hom
+    type 'a anndatum
+    datatype 'a variable
+      con VAR : string * 'a -> 'a variable
+    datatype ('a,'b) exp
+      con ASSIGN : 'b variable * ('a,'b) annexp -> ('a,'b) exp
+      con CALL : ('a,'b) annexp * ('a,'b) annargs -> ('a,'b) exp
+      con IF : ('a,'b) annexp * ('a,'b) annexp * ('a,'b) annexp -> ('a,'b) exp
+      con LAMBDA : ('a,'b) annformals * ('a,'b) annexp -> ('a,'b) exp
+      con LITERAL : 'a anndatum -> ('a,'b) exp
+      con NOEXP : ('a,'b) exp
+      con VARIABLE : 'b variable -> ('a,'b) exp
+    datatype ('a,'b) annexp
+      con EXP : ('a,'b) exp * 'a -> ('a,'b) annexp
+    datatype ('a,'b) args
+      con NULLARG : ('a,'b) args
+      con PAIRARG : ('a,'b) annexp * ('a,'b) annargs -> ('a,'b) args
+    datatype ('a,'b) annargs
+      con ARGS : ('a,'b) args * 'a -> ('a,'b) annargs
+    datatype ('a,'b) formals
+      con ANULLPAR : ('a,'b) formals
+      con APAIRPAR : 'b variable * ('a,'b) annformals -> ('a,'b) formals
+      con AVARPAR : 'b variable -> ('a,'b) formals
+    datatype ('a,'b) annformals
+      con FORMALS : ('a,'b) formals * 'a -> ('a,'b) annformals
+    val apply_ehom : ('d,'a,'f,'b,'c,'e) exp_hom -> ('d,'e) annexp -> 'f
+    exception ParseError of string
+    val dat2exp : (unit -> 'a) * (unit -> 'b) -> 'a anndatum -> ('a,'b) annexp
+    val read_exp : (unit -> 'a) * (unit -> 'b) -> instream -> ('a,'b) annexp
+  end
+val it = () : unit
+- use "exp.sml";
+[opening exp.sml]
+exp.sml:1.11-285.3 Error: value type in structure doesn't match signature spec
+    name: apply_ehom
+  spec:   ('d,'a,'f,'b,'c,'e) exp_hom -> ('d,'e) annexp -> 'f
+  actual: ('a,'a anndatum,'b,'c,'d,'e variable) exp_hom -> ('a,'e) annexp -> 'b
+- use "exp.sig";
+[opening exp.sig]
+signature KERNELEXP =
+  sig
+    datatype ('a,'b,'c,'d,'e,'f) exp_hom
+      con EHOM : {anullpar:'a -> 'd, apairpar:'a -> 'f * 'd -> 'd,
+                  assign:'a -> 'f * 'c -> 'c, avarpar:'a -> 'f -> 'd,
+                  call:'a -> 'c * 'e -> 'c, ifexp:'a -> 'c * 'c * 'c -> 'c,
+                  lambda:'a -> 'd * 'c -> 'c, literal:'a -> 'b -> 'c,
+                  noexp:'a -> 'c, nullarg:'a -> 'e,
+                  pairarg:'a -> 'c * 'e -> 'e, variable:'a -> 'f -> 'c}
+                 -> ('a,'b,'c,'d,'e,'f) exp_hom
+    type 'a anndatum
+    datatype 'a variable
+      con VAR : string * 'a -> 'a variable
+    datatype ('a,'b) exp
+      con ASSIGN : 'b variable * ('a,'b) annexp -> ('a,'b) exp
+      con CALL : ('a,'b) annexp * ('a,'b) annargs -> ('a,'b) exp
+      con IF : ('a,'b) annexp * ('a,'b) annexp * ('a,'b) annexp -> ('a,'b) exp
+      con LAMBDA : ('a,'b) annformals * ('a,'b) annexp -> ('a,'b) exp
+      con LITERAL : 'a anndatum -> ('a,'b) exp
+      con NOEXP : ('a,'b) exp
+      con VARIABLE : 'b variable -> ('a,'b) exp
+    datatype ('a,'b) annexp
+      con EXP : ('a,'b) exp * 'a -> ('a,'b) annexp
+    datatype ('a,'b) args
+      con NULLARG : ('a,'b) args
+      con PAIRARG : ('a,'b) annexp * ('a,'b) annargs -> ('a,'b) args
+    datatype ('a,'b) annargs
+      con ARGS : ('a,'b) args * 'a -> ('a,'b) annargs
+    datatype ('a,'b) formals
+      con ANULLPAR : ('a,'b) formals
+      con APAIRPAR : 'b variable * ('a,'b) annformals -> ('a,'b) formals
+      con AVARPAR : 'b variable -> ('a,'b) formals
+    datatype ('a,'b) annformals
+      con FORMALS : ('a,'b) formals * 'a -> ('a,'b) annformals
+    val apply_ehom : ('c,'c anndatum,'e,'a,'b,'d variable) exp_hom
+                     -> ('c,'d) annexp -> 'e
+    exception ParseError of string
+    val dat2exp : (unit -> 'a) * (unit -> 'b) -> 'a anndatum -> ('a,'b) annexp
+    val read_exp : (unit -> 'a) * (unit -> 'b) -> instream -> ('a,'b) annexp
+  end
+val it = () : unit
+- use "exp.sml";
+[opening exp.sml]
+
+[Major collection... 47% used (3213672/6705032), 4616 msec]
+structure KernelExp : KERNELEXP
+val it = () : unit
+- open SchemeDatum;
+open SchemeDatum
+val apply_dhom = fn : ('a,'b) datum_hom -> 'a anndatum -> 'b
+exception ReadError = ReadError
+exception EOF = EOF
+val read_datum = fn : (unit -> 'a) -> instream -> 'a anndatum
+- open KernelExp;
+open KernelExp
+val apply_ehom = fn
+  : ('a,'a anndatum,'b,'c,'d,'e variable) exp_hom -> ('a,'e) annexp -> 'b
+exception ParseError = ParseError
+val dat2exp = fn : (unit -> 'a) * (unit -> 'b) -> 'a anndatum -> ('a,'b) annexp
+val read_exp = fn : (unit -> 'a) * (unit -> 'b) -> instream -> ('a,'b) annexp
+- use "kernel.sml";
+[opening kernel.sml]
+kernel.sml:3.1 Error: syntax error found at STRUCT
+- 
+- use "kernel.sml";
+[opening kernel.sml]
+kernel.sml:3.1-3.6 Error: syntax error: inserting EQUAL
+kernel.sml:59.26-59.27 Error: syntax error: replacing DARROW with EQUAL
+kernel.sml:85.36 Error: syntax error: inserting EQUAL
+kernel.sml:87.19-87.21 Error: syntax error: inserting EQUAL
+kernel.sml:154.26-154.27 Error: syntax error: replacing DARROW with EQUAL
+kernel.sml:85.15-92.17 Warning: rebinding =
+kernel.sml:88.52-88.54 Error: unbound variable or constructor: hpl
+kernel.sml:88.19-88.25 Error: unbound variable or constructor: arrowty
+kernel.sml:90.32-90.38 Error: unbound variable or constructor: arrowty
+kernel.sml:87.19-88.56 Error: operator is not a function
+  operator: 'Z * 'Y * atype
+  in expression:
+    = (pl bogus,make_type (FUNC,<exp> :: <exp>))
+kernel.sml:144.20-144.53 Error: operator and operand don't agree (tycon mismatch)
+  operator domain: 'Z aotree * 'Z aotree
+  operand:         (atype * atype) variable * 'Y
+  in expression:
+    AND (v,Arst)
+kernel.sml:156.11-160.82 Error: operator and operand don't agree (tycon mismatch)
+  operator domain: {anullpar:atype * atype
+                             -> (atype * atype) bintree
+                                * (atype * atype) variable aotree * atype,
+                    apairpar:atype * atype
+                             -> (atype * atype) variable
+                                * ((atype * atype) bintree
+                                   * (atype * atype) variable aotree * atype)
+                                -> (atype * atype) bintree
+                                   * (atype * atype) variable aotree * atype,
+                    assign:atype * atype
+                           -> (atype * atype) variable
+                              * ((atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype)
+                              -> (atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype,
+                    avarpar:atype * atype
+                            -> (atype * atype) variable
+                               -> (atype * atype) bintree
+                                  * (atype * atype) variable aotree * atype,
+                    call:atype * atype
+                         -> ((atype * atype) bintree
+                             * (atype * atype) variable aotree * atype)
+                            * (_ -> 'Z)
+                            -> (atype * atype) bintree
+                               * (atype * atype) variable aotree * atype,
+                    ifexp:atype * atype
+                          -> ((atype * atype) bintree
+                              * (atype * atype) variable aotree * atype)
+                             * ((atype * atype) bintree
+                                * (atype * atype) variable aotree * atype)
+                             * ((atype * atype) bintree
+                                * (atype * atype) variable aotree * atype)
+                             -> (atype * atype) bintree
+                                * (atype * atype) variable aotree * atype,
+                    lambda:atype * atype
+                           -> ((atype * atype) bintree
+                               * (atype * atype) variable aotree * atype)
+                              * ((atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype)
+                              -> (atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype,
+                    literal:atype * atype
+                            -> (atype * atype) anndatum
+                               -> (atype * atype) bintree
+                                  * (atype * atype) variable aotree * atype,
+                    noexp:atype * atype
+                          -> (atype * atype) bintree
+                             * (atype * atype) variable aotree * atype,
+                    nullarg:atype * atype -> _ -> 'Z,
+                    pairarg:atype * atype
+                            -> ((atype * atype) bintree
+                                * (atype * atype) variable aotree * atype)
+                               * (_ -> 'Z)
+                               -> _ -> 'Z,
+                    variable:atype * atype
+                             -> (atype * atype) variable
+                                -> (atype * atype) bintree
+                                   * (atype * atype) variable aotree * atype}
+  operand:         {anullpar:atype * atype
+                             -> (atype * atype) bintree
+                                * (atype * atype) variable aotree * atype,
+                    apairpar:atype * atype
+                             -> (atype * atype) variable
+                                * ((atype * atype) bintree
+                                   * (atype * atype) variable aotree * atype)
+                                -> (atype * atype) bintree * _ * atype,
+                    assign:atype * atype
+                           -> (atype * atype) variable
+                              * ((atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype)
+                              -> (atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype,
+                    avarpar:atype * atype
+                            -> (atype * atype) variable
+                               -> (atype * atype) bintree
+                                  * (atype * atype) variable aotree * atype,
+                    call:atype * atype
+                         -> ((atype * atype) bintree
+                             * (atype * atype) variable aotree * atype)
+                            * (_ -> 'Z)
+                            -> (atype * atype) bintree
+                               * (atype * atype) variable aotree * atype,
+                    ifexp:atype * atype
+                          -> ((atype * atype) bintree
+                              * (atype * atype) variable aotree * atype)
+                             * ((atype * atype) bintree
+                                * (atype * atype) variable aotree * atype)
+                             * ((atype * atype) bintree
+                                * (atype * atype) variable aotree * atype)
+                             -> (atype * atype) bintree
+                                * (atype * atype) variable aotree * atype,
+                    lambda:atype * atype
+                           -> ((atype * atype) bintree
+                               * (atype * atype) variable aotree * atype)
+                              * ((atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype)
+                              -> (atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype,
+                    literal:atype * atype
+                            -> (atype * atype) anndatum
+                               -> (atype * atype) bintree
+                                  * (atype * atype) variable aotree * atype,
+                    noexp:atype * atype
+                          -> (atype * atype) bintree
+                             * (atype * atype) variable aotree * atype,
+                    nullarg:atype * atype
+                            -> (atype * atype) bintree * 'Y aotree * atype,
+                    pairarg:atype * 'X
+                            -> (atype * 'X) bintree * 'W aotree * atype
+                               -> (atype * 'X) bintree * 'W aotree * atype
+                                  -> (atype * 'X) bintree * 'W aotree * 'X,
+                    variable:'V * 'U
+                             -> (atype * atype) variable
+                                -> ('V * 'U) bintree
+                                   * (atype * atype) variable aotree * 'U}
+  in expression:
+    EHOM
+        {noexp=noexp,literal=literal,variable=variable,call=call,lambda=lambda,
+         ifexp=ifexp,assign=notimp,pairarg=pairarg,nullarg=nullarg,
+         avarpar=avarpar,apairpar=apairpar,anullpar=anullpar}
+- use "kernel.sml";
+[opening kernel.sml]
+kernel.sml:85.36 Error: syntax error: inserting EQUAL
+kernel.sml:87.19-87.21 Error: syntax error: inserting EQUAL
+kernel.sml:154.26-154.27 Error: syntax error: replacing DARROW with EQUAL
+kernel.sml:85.15-92.17 Warning: rebinding =
+kernel.sml:88.52-88.54 Error: unbound variable or constructor: hpl
+kernel.sml:88.19-88.25 Error: unbound variable or constructor: arrowty
+kernel.sml:90.32-90.38 Error: unbound variable or constructor: arrowty
+kernel.sml:87.19-88.56 Error: operator is not a function
+  operator: 'Z * 'Y * atype
+  in expression:
+    = (pl bogus,make_type (FUNC,<exp> :: <exp>))
+kernel.sml:144.20-144.53 Error: operator and operand don't agree (tycon mismatch)
+  operator domain: 'Z aotree * 'Z aotree
+  operand:         (atype * atype) variable * 'Y
+  in expression:
+    AND (v,Arst)
+kernel.sml:156.11-160.82 Error: operator and operand don't agree (tycon mismatch)
+  operator domain: {anullpar:atype * atype
+                             -> (atype * atype) bintree
+                                * (atype * atype) variable aotree * atype,
+                    apairpar:atype * atype
+                             -> (atype * atype) variable
+                                * ((atype * atype) bintree
+                                   * (atype * atype) variable aotree * atype)
+                                -> (atype * atype) bintree
+                                   * (atype * atype) variable aotree * atype,
+                    assign:atype * atype
+                           -> (atype * atype) variable
+                              * ((atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype)
+                              -> (atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype,
+                    avarpar:atype * atype
+                            -> (atype * atype) variable
+                               -> (atype * atype) bintree
+                                  * (atype * atype) variable aotree * atype,
+                    call:atype * atype
+                         -> ((atype * atype) bintree
+                             * (atype * atype) variable aotree * atype)
+                            * (_ -> 'Z)
+                            -> (atype * atype) bintree
+                               * (atype * atype) variable aotree * atype,
+                    ifexp:atype * atype
+                          -> ((atype * atype) bintree
+                              * (atype * atype) variable aotree * atype)
+                             * ((atype * atype) bintree
+                                * (atype * atype) variable aotree * atype)
+                             * ((atype * atype) bintree
+                                * (atype * atype) variable aotree * atype)
+                             -> (atype * atype) bintree
+                                * (atype * atype) variable aotree * atype,
+                    lambda:atype * atype
+                           -> ((atype * atype) bintree
+                               * (atype * atype) variable aotree * atype)
+                              * ((atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype)
+                              -> (atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype,
+                    literal:atype * atype
+                            -> (atype * atype) anndatum
+                               -> (atype * atype) bintree
+                                  * (atype * atype) variable aotree * atype,
+                    noexp:atype * atype
+                          -> (atype * atype) bintree
+                             * (atype * atype) variable aotree * atype,
+                    nullarg:atype * atype -> _ -> 'Z,
+                    pairarg:atype * atype
+                            -> ((atype * atype) bintree
+                                * (atype * atype) variable aotree * atype)
+                               * (_ -> 'Z)
+                               -> _ -> 'Z,
+                    variable:atype * atype
+                             -> (atype * atype) variable
+                                -> (atype * atype) bintree
+                                   * (atype * atype) variable aotree * atype}
+  operand:         {anullpar:atype * atype
+                             -> (atype * atype) bintree
+                                * (atype * atype) variable aotree * atype,
+                    apairpar:atype * atype
+                             -> (atype * atype) variable
+                                * ((atype * atype) bintree
+                                   * (atype * atype) variable aotree * atype)
+                                -> (atype * atype) bintree * _ * atype,
+                    assign:atype * atype
+                           -> (atype * atype) variable
+                              * ((atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype)
+                              -> (atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype,
+                    avarpar:atype * atype
+                            -> (atype * atype) variable
+                               -> (atype * atype) bintree
+                                  * (atype * atype) variable aotree * atype,
+                    call:atype * atype
+                         -> ((atype * atype) bintree
+                             * (atype * atype) variable aotree * atype)
+                            * (_ -> 'Z)
+                            -> (atype * atype) bintree
+                               * (atype * atype) variable aotree * atype,
+                    ifexp:atype * atype
+                          -> ((atype * atype) bintree
+                              * (atype * atype) variable aotree * atype)
+                             * ((atype * atype) bintree
+                                * (atype * atype) variable aotree * atype)
+                             * ((atype * atype) bintree
+                                * (atype * atype) variable aotree * atype)
+                             -> (atype * atype) bintree
+                                * (atype * atype) variable aotree * atype,
+                    lambda:atype * atype
+                           -> ((atype * atype) bintree
+                               * (atype * atype) variable aotree * atype)
+                              * ((atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype)
+                              -> (atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype,
+                    literal:atype * atype
+                            -> (atype * atype) anndatum
+                               -> (atype * atype) bintree
+                                  * (atype * atype) variable aotree * atype,
+                    noexp:atype * atype
+                          -> (atype * atype) bintree
+                             * (atype * atype) variable aotree * atype,
+                    nullarg:atype * atype
+                            -> (atype * atype) bintree * 'Y aotree * atype,
+                    pairarg:atype * 'X
+                            -> (atype * 'X) bintree * 'W aotree * atype
+                               -> (atype * 'X) bintree * 'W aotree * atype
+                                  -> (atype * 'X) bintree * 'W aotree * 'X,
+                    variable:'V * 'U
+                             -> (atype * atype) variable
+                                -> ('V * 'U) bintree
+                                   * (atype * atype) variable aotree * 'U}
+  in expression:
+    EHOM
+        {noexp=noexp,literal=literal,variable=variable,call=call,lambda=lambda,
+         ifexp=ifexp,assign=notimp,pairarg=pairarg,nullarg=nullarg,
+         avarpar=avarpar,apairpar=apairpar,anullpar=anullpar}
+- 
+- 
+- 
+- use "kernel.sml";
+[opening kernel.sml]
+kernel.sml:154.26-154.27 Error: syntax error: replacing DARROW with EQUAL
+kernel.sml:88.55-88.60 Error: unbound variable or constructor: hrandl
+kernel.sml:88.19-88.25 Error: unbound variable or constructor: arrowty
+kernel.sml:91.50-91.55 Error: unbound variable or constructor: Arator
+kernel.sml:90.35-90.41 Error: unbound variable or constructor: arrowty
+kernel.sml:87.19-88.62 Error: pattern and expression in val dec don't agree (tycon mismatch)
+  pattern:    'Z * 'Y * 'X
+  expression: bool
+  in declaration:
+    (Crandl,Arandl,hrandl) = = (randl bogus,make_type (<exp>,<exp>))
+kernel.sml:144.20-144.53 Error: operator and operand don't agree (tycon mismatch)
+  operator domain: 'Z aotree * 'Z aotree
+  operand:         (atype * atype) variable * 'Y
+  in expression:
+    AND (v,Arst)
+kernel.sml:156.11-160.82 Error: operator and operand don't agree (tycon mismatch)
+  operator domain: {anullpar:atype * atype
+                             -> (atype * atype) bintree
+                                * (atype * atype) variable aotree * atype,
+                    apairpar:atype * atype
+                             -> (atype * atype) variable
+                                * ((atype * atype) bintree
+                                   * (atype * atype) variable aotree * atype)
+                                -> (atype * atype) bintree
+                                   * (atype * atype) variable aotree * atype,
+                    assign:atype * atype
+                           -> (atype * atype) variable
+                              * ((atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype)
+                              -> (atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype,
+                    avarpar:atype * atype
+                            -> (atype * atype) variable
+                               -> (atype * atype) bintree
+                                  * (atype * atype) variable aotree * atype,
+                    call:atype * atype
+                         -> ((atype * atype) bintree
+                             * (atype * atype) variable aotree * atype)
+                            * (_ -> (utype * attributes) UnionFind.UF)
+                            -> (atype * atype) bintree
+                               * (atype * atype) variable aotree * atype,
+                    ifexp:atype * atype
+                          -> ((atype * atype) bintree
+                              * (atype * atype) variable aotree * atype)
+                             * ((atype * atype) bintree
+                                * (atype * atype) variable aotree * atype)
+                             * ((atype * atype) bintree
+                                * (atype * atype) variable aotree * atype)
+                             -> (atype * atype) bintree
+                                * (atype * atype) variable aotree * atype,
+                    lambda:atype * atype
+                           -> ((atype * atype) bintree
+                               * (atype * atype) variable aotree * atype)
+                              * ((atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype)
+                              -> (atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype,
+                    literal:atype * atype
+                            -> (atype * atype) anndatum
+                               -> (atype * atype) bintree
+                                  * (atype * atype) variable aotree * atype,
+                    noexp:atype * atype
+                          -> (atype * atype) bintree
+                             * (atype * atype) variable aotree * atype,
+                    nullarg:atype * atype
+                            -> _ -> (utype * attributes) UnionFind.UF,
+                    pairarg:atype * atype
+                            -> ((atype * atype) bintree
+                                * (atype * atype) variable aotree * atype)
+                               * (_ -> (utype * attributes) UnionFind.UF)
+                               -> _ -> (utype * attributes) UnionFind.UF,
+                    variable:atype * atype
+                             -> (atype * atype) variable
+                                -> (atype * atype) bintree
+                                   * (atype * atype) variable aotree * atype}
+  operand:         {anullpar:atype * atype
+                             -> (atype * atype) bintree
+                                * (atype * atype) variable aotree * atype,
+                    apairpar:atype * atype
+                             -> (atype * atype) variable
+                                * ((atype * atype) bintree
+                                   * (atype * atype) variable aotree * atype)
+                                -> (atype * atype) bintree * _ * atype,
+                    assign:atype * atype
+                           -> (atype * atype) variable
+                              * ((atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype)
+                              -> (atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype,
+                    avarpar:atype * atype
+                            -> (atype * atype) variable
+                               -> (atype * atype) bintree
+                                  * (atype * atype) variable aotree * atype,
+                    call:atype * atype
+                         -> ((atype * atype) bintree
+                             * (atype * atype) variable aotree * atype)
+                            * (_ -> (utype * attributes) UnionFind.UF)
+                            -> (atype * atype) bintree
+                               * (atype * atype) variable aotree * atype,
+                    ifexp:atype * atype
+                          -> ((atype * atype) bintree
+                              * (atype * atype) variable aotree * atype)
+                             * ((atype * atype) bintree
+                                * (atype * atype) variable aotree * atype)
+                             * ((atype * atype) bintree
+                                * (atype * atype) variable aotree * atype)
+                             -> (atype * atype) bintree
+                                * (atype * atype) variable aotree * atype,
+                    lambda:atype * atype
+                           -> ((atype * atype) bintree
+                               * (atype * atype) variable aotree * atype)
+                              * ((atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype)
+                              -> (atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype,
+                    literal:atype * atype
+                            -> (atype * atype) anndatum
+                               -> (atype * atype) bintree
+                                  * (atype * atype) variable aotree * atype,
+                    noexp:atype * atype
+                          -> (atype * atype) bintree
+                             * (atype * atype) variable aotree * atype,
+                    nullarg:atype * atype
+                            -> (atype * atype) bintree * 'Z aotree * atype,
+                    pairarg:atype * 'Y
+                            -> (atype * 'Y) bintree * 'X aotree * atype
+                               -> (atype * 'Y) bintree * 'X aotree * atype
+                                  -> (atype * 'Y) bintree * 'X aotree * 'Y,
+                    variable:'W * 'V
+                             -> (atype * atype) variable
+                                -> ('W * 'V) bintree
+                                   * (atype * atype) variable aotree * 'V}
+  in expression:
+    EHOM
+        {noexp=noexp,literal=literal,variable=variable,call=call,lambda=lambda,
+         ifexp=ifexp,assign=notimp,pairarg=pairarg,nullarg=nullarg,
+         avarpar=avarpar,apairpar=apairpar,anullpar=anullpar}
+- 
+- use "kernel.sml";
+[opening kernel.sml]
+kernel.sml:154.26-154.27 Error: syntax error: replacing DARROW with EQUAL
+kernel.sml:144.20-144.53 Error: operator and operand don't agree (tycon mismatch)
+  operator domain: 'Z aotree * 'Z aotree
+  operand:         (atype * atype) variable * 'Y
+  in expression:
+    AND (v,Arst)
+kernel.sml:156.11-160.82 Error: operator and operand don't agree (tycon mismatch)
+  operator domain: {anullpar:atype * atype
+                             -> (atype * atype) bintree
+                                * (atype * atype) variable aotree * atype,
+                    apairpar:atype * atype
+                             -> (atype * atype) variable
+                                * ((atype * atype) bintree
+                                   * (atype * atype) variable aotree * atype)
+                                -> (atype * atype) bintree
+                                   * (atype * atype) variable aotree * atype,
+                    assign:atype * atype
+                           -> (atype * atype) variable
+                              * ((atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype)
+                              -> (atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype,
+                    avarpar:atype * atype
+                            -> (atype * atype) variable
+                               -> (atype * atype) bintree
+                                  * (atype * atype) variable aotree * atype,
+                    call:atype * atype
+                         -> ((atype * atype) bintree
+                             * (atype * atype) variable aotree * atype)
+                            * ((atype * atype) bintree
+                               * (atype * atype) variable aotree * atype)
+                            -> (atype * atype) bintree
+                               * (atype * atype) variable aotree * atype,
+                    ifexp:atype * atype
+                          -> ((atype * atype) bintree
+                              * (atype * atype) variable aotree * atype)
+                             * ((atype * atype) bintree
+                                * (atype * atype) variable aotree * atype)
+                             * ((atype * atype) bintree
+                                * (atype * atype) variable aotree * atype)
+                             -> (atype * atype) bintree
+                                * (atype * atype) variable aotree * atype,
+                    lambda:atype * atype
+                           -> ((atype * atype) bintree
+                               * (atype * atype) variable aotree * atype)
+                              * ((atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype)
+                              -> (atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype,
+                    literal:atype * atype
+                            -> (atype * atype) anndatum
+                               -> (atype * atype) bintree
+                                  * (atype * atype) variable aotree * atype,
+                    noexp:atype * atype
+                          -> (atype * atype) bintree
+                             * (atype * atype) variable aotree * atype,
+                    nullarg:atype * atype
+                            -> (atype * atype) bintree
+                               * (atype * atype) variable aotree * atype,
+                    pairarg:atype * atype
+                            -> ((atype * atype) bintree
+                                * (atype * atype) variable aotree * atype)
+                               * ((atype * atype) bintree
+                                  * (atype * atype) variable aotree * atype)
+                               -> (atype * atype) bintree
+                                  * (atype * atype) variable aotree * atype,
+                    variable:atype * atype
+                             -> (atype * atype) variable
+                                -> (atype * atype) bintree
+                                   * (atype * atype) variable aotree * atype}
+  operand:         {anullpar:atype * atype
+                             -> (atype * atype) bintree
+                                * (atype * atype) variable aotree * atype,
+                    apairpar:atype * atype
+                             -> (atype * atype) variable
+                                * ((atype * atype) bintree
+                                   * (atype * atype) variable aotree * atype)
+                                -> (atype * atype) bintree * _ * atype,
+                    assign:atype * atype
+                           -> (atype * atype) variable
+                              * ((atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype)
+                              -> (atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype,
+                    avarpar:atype * atype
+                            -> (atype * atype) variable
+                               -> (atype * atype) bintree
+                                  * (atype * atype) variable aotree * atype,
+                    call:atype * atype
+                         -> ((atype * atype) bintree
+                             * (atype * atype) variable aotree * atype)
+                            * ((atype * atype) bintree
+                               * (atype * atype) variable aotree * atype)
+                            -> (atype * atype) bintree
+                               * (atype * atype) variable aotree * atype,
+                    ifexp:atype * atype
+                          -> ((atype * atype) bintree
+                              * (atype * atype) variable aotree * atype)
+                             * ((atype * atype) bintree
+                                * (atype * atype) variable aotree * atype)
+                             * ((atype * atype) bintree
+                                * (atype * atype) variable aotree * atype)
+                             -> (atype * atype) bintree
+                                * (atype * atype) variable aotree * atype,
+                    lambda:atype * atype
+                           -> ((atype * atype) bintree
+                               * (atype * atype) variable aotree * atype)
+                              * ((atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype)
+                              -> (atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype,
+                    literal:atype * atype
+                            -> (atype * atype) anndatum
+                               -> (atype * atype) bintree
+                                  * (atype * atype) variable aotree * atype,
+                    noexp:atype * atype
+                          -> (atype * atype) bintree
+                             * (atype * atype) variable aotree * atype,
+                    nullarg:atype * atype
+                            -> (atype * atype) bintree
+                               * (atype * atype) variable aotree * atype,
+                    pairarg:atype * atype
+                            -> (atype * atype) bintree * 'Z aotree * atype
+                               -> (atype * atype) bintree * 'Z aotree * atype
+                                  -> (atype * atype) bintree * 'Z aotree
+                                     * atype,
+                    variable:'Y * 'X
+                             -> (atype * atype) variable
+                                -> ('Y * 'X) bintree
+                                   * (atype * atype) variable aotree * 'X}
+  in expression:
+    EHOM
+        {noexp=noexp,literal=literal,variable=variable,call=call,lambda=lambda,
+         ifexp=ifexp,assign=notimp,pairarg=pairarg,nullarg=nullarg,
+         avarpar=avarpar,apairpar=apairpar,anullpar=anullpar}
+- 
+- 
+- use "kernel.sml";
+[opening kernel.sml]
+kernel.sml:156.11-161.42 Error: operator and operand don't agree (tycon mismatch)
+  operator domain: {anullpar:atype * atype
+                             -> (atype * atype) bintree
+                                * (atype * atype) variable aotree * atype,
+                    apairpar:atype * atype
+                             -> (atype * atype) variable
+                                * ((atype * atype) bintree
+                                   * (atype * atype) variable aotree * atype)
+                                -> (atype * atype) bintree
+                                   * (atype * atype) variable aotree * atype,
+                    assign:atype * atype
+                           -> (atype * atype) variable
+                              * ((atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype)
+                              -> (atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype,
+                    avarpar:atype * atype
+                            -> (atype * atype) variable
+                               -> (atype * atype) bintree
+                                  * (atype * atype) variable aotree * atype,
+                    call:atype * atype
+                         -> ((atype * atype) bintree
+                             * (atype * atype) variable aotree * atype)
+                            * ((atype * atype) bintree
+                               * (atype * atype) variable aotree * atype)
+                            -> (atype * atype) bintree
+                               * (atype * atype) variable aotree * atype,
+                    ifexp:atype * atype
+                          -> ((atype * atype) bintree
+                              * (atype * atype) variable aotree * atype)
+                             * ((atype * atype) bintree
+                                * (atype * atype) variable aotree * atype)
+                             * ((atype * atype) bintree
+                                * (atype * atype) variable aotree * atype)
+                             -> (atype * atype) bintree
+                                * (atype * atype) variable aotree * atype,
+                    lambda:atype * atype
+                           -> ((atype * atype) bintree
+                               * (atype * atype) variable aotree * atype)
+                              * ((atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype)
+                              -> (atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype,
+                    literal:atype * atype
+                            -> (atype * atype) anndatum
+                               -> (atype * atype) bintree
+                                  * (atype * atype) variable aotree * atype,
+                    noexp:atype * atype
+                          -> (atype * atype) bintree
+                             * (atype * atype) variable aotree * atype,
+                    nullarg:atype * atype
+                            -> (atype * atype) bintree
+                               * (atype * atype) variable aotree * atype,
+                    pairarg:atype * atype
+                            -> ((atype * atype) bintree
+                                * (atype * atype) variable aotree * atype)
+                               * ((atype * atype) bintree
+                                  * (atype * atype) variable aotree * atype)
+                               -> (atype * atype) bintree
+                                  * (atype * atype) variable aotree * atype,
+                    variable:atype * atype
+                             -> (atype * atype) variable
+                                -> (atype * atype) bintree
+                                   * (atype * atype) variable aotree * atype}
+  operand:         {anullpar:atype * atype
+                             -> (atype * atype) bintree
+                                * (atype * atype) variable aotree * atype,
+                    apairpar:atype * atype
+                             -> (atype * atype) variable
+                                * ((atype * atype) bintree
+                                   * (atype * atype) variable aotree * atype)
+                                -> (atype * atype) bintree
+                                   * (atype * atype) variable aotree * atype,
+                    assign:atype * atype
+                           -> (atype * atype) variable
+                              * ((atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype)
+                              -> (atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype,
+                    avarpar:atype * atype
+                            -> (atype * atype) variable
+                               -> (atype * atype) bintree
+                                  * (atype * atype) variable aotree * atype,
+                    call:atype * atype
+                         -> ((atype * atype) bintree
+                             * (atype * atype) variable aotree * atype)
+                            * ((atype * atype) bintree
+                               * (atype * atype) variable aotree * atype)
+                            -> (atype * atype) bintree
+                               * (atype * atype) variable aotree * atype,
+                    ifexp:atype * atype
+                          -> ((atype * atype) bintree
+                              * (atype * atype) variable aotree * atype)
+                             * ((atype * atype) bintree
+                                * (atype * atype) variable aotree * atype)
+                             * ((atype * atype) bintree
+                                * (atype * atype) variable aotree * atype)
+                             -> (atype * atype) bintree
+                                * (atype * atype) variable aotree * atype,
+                    lambda:atype * atype
+                           -> ((atype * atype) bintree
+                               * (atype * atype) variable aotree * atype)
+                              * ((atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype)
+                              -> (atype * atype) bintree
+                                 * (atype * atype) variable aotree * atype,
+                    literal:atype * atype
+                            -> (atype * atype) anndatum
+                               -> (atype * atype) bintree
+                                  * (atype * atype) variable aotree * atype,
+                    noexp:atype * atype
+                          -> (atype * atype) bintree
+                             * (atype * atype) variable aotree * atype,
+                    nullarg:atype * atype
+                            -> (atype * atype) bintree
+                               * (atype * atype) variable aotree * atype,
+                    pairarg:atype * atype
+                            -> (atype * atype) bintree * 'Z aotree * atype
+                               -> (atype * atype) bintree * 'Z aotree * atype
+                                  -> (atype * atype) bintree * 'Z aotree
+                                     * atype,
+                    variable:'Y * 'X
+                             -> (atype * atype) variable
+                                -> ('Y * 'X) bintree
+                                   * (atype * atype) variable aotree * 'X}
+  in expression:
+    EHOM
+        {noexp=noexp,literal=literal,variable=variable,call=call,lambda=lambda,
+         ifexp=ifexp,assign=notimp,pairarg=pairarg,nullarg=nullarg,
+         avarpar=avarpar,apairpar=apairpar,anullpar=anullpar}

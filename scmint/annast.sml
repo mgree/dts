@@ -93,9 +93,9 @@ type ('a,'b,'c,'d,'e,'f,'g,'h,'i,'j) fcn_record =
     listtemp_fcn:'i list -> 'j,
     literal_fcn:'d -> 'a,
     namedlet_fcn:string * (string * 'a) list * ('b list * ('a list * 'a)) -> 'a, 
-    nullcase_fcn:'c,
-    nullcond_fcn:'f, 
-    nullpar_fcn:'h,
+    nullcase_fcn: unit -> 'c,
+    nullcond_fcn: unit -> 'f, 
+    nullpar_fcn: unit -> 'h,
     or_fcn:'a list -> 'a,
     pairpar_fcn:string * 'h -> 'h,
     quasiquote_fcn:'j -> 'a,
@@ -342,7 +342,7 @@ type ('a,'b,'c,'d,'e,'f,'g,'h,'i,'j) fcn_record =
                           (LISTDAT(variable::formals))::
                           body))) =
 	           let val variable' = PTvariable F variable
-                       val formals'  = PTformals F formals (#nullpar_fcn F)
+                       val formals'  = PTformals F formals ((#nullpar_fcn F) ())
                        val body'     = PTbody F body
                    in
                        ((#fundef_fcn F) (variable',formals',body'))
@@ -436,14 +436,14 @@ type ('a,'b,'c,'d,'e,'f,'g,'h,'i,'j) fcn_record =
 
            (* <quotation> *)
   |   PTexp F (x as (LISTDAT([SYMBDAT "quote",datum]))) =
-            (#literal_fcn F) ((#datum_fcn F) x)
+            (#literal_fcn F) ((#datum_fcn F) datum)
 
            (* <lambda expression> *)
            (* (lambda (<variable>* ) <body>) *)
   |   PTexp F (exp as (LISTDAT((SYMBDAT "lambda")::
                    (formals as (LISTDAT(lst)))::
                    body))) =
-           ((#lambda_fcn F) ((PTformals F lst (#nullpar_fcn F)), PTbody F body)
+           ((#lambda_fcn F) ((PTformals F lst ((#nullpar_fcn F)())), PTbody F body)
            handle ParseError mes => sig_err(mes,exp))
     
            (* (lambda (<variable>+ . <variable>) <body>) *)
@@ -494,7 +494,7 @@ type ('a,'b,'c,'d,'e,'f,'g,'h,'i,'j) fcn_record =
                       if cond_part = [] then 
                      sig_err("Illegal empty conditional clause encountered",c) 
                      else map (PTcond_clause F) cond_part
-                  val ccbody = Pcondlist2condcons F (mp, #nullcond_fcn F)
+                  val ccbody = Pcondlist2condcons F (mp, (#nullcond_fcn F)())
                in
                   (#cond_fcn F) ccbody
                end
@@ -518,7 +518,7 @@ type ('a,'b,'c,'d,'e,'f,'g,'h,'i,'j) fcn_record =
 	                     sig_err("Illegal empty case clause encountered",c)
                           else
 		             map (PTcase_clause F) case_part
-                      val ccbody = Pcaselist2casecons F (mp, #nullcase_fcn F)
+                      val ccbody = Pcaselist2casecons F (mp, (#nullcase_fcn F)())
                   in
                       (#case_fcn F) (PTexp F exp, ccbody)
                   end
@@ -738,13 +738,13 @@ let
   val delay_fcn = fn x => ADELAY (ini(), x)
   val quasiquote_fcn = fn x => AQUASIQUOTE (ini(), x)
   val condclause_fcn = fn x => ACONDCLAUSE (ini(), x)
-  val nullcond_fcn =  ANULLCOND (ini())
+  val nullcond_fcn =  fn () => ANULLCOND (ini())
   val conddefault_fcn = fn x => ACONDDEFAULT (ini(), x)
   val testseq_fcn = fn x => ATESTSEQ (ini(), x)
   val test_fcn = fn x => ATEST (ini(), x)
   val testrec_fcn = fn x => ATESTREC (ini(), x)
   val caseclause_fcn = fn x => ACASECLAUSE (ini(), x)
-  val nullcase_fcn =  ANULLCASE (ini())
+  val nullcase_fcn =  fn () => ANULLCASE (ini())
   val casedefault_fcn = fn x => ACASEDEFAULT (ini(), x)
   val vardef_fcn = fn x => AVARDEF (ini(), x)
   val fundef_fcn = fn x => AFUNDEF (ini(), x)
@@ -758,7 +758,7 @@ let
   val unqspl_fcn = fn x => AUNQSPL (ini(), x)
   val varpar_fcn = fn x => AVARPAR (ini(), x)
   val pairpar_fcn = fn x => APAIRPAR (ini(), x)
-  val nullpar_fcn =  ANULLPAR (ini())
+  val nullpar_fcn =  fn () => ANULLPAR (ini())
   val command_fcn = fn x => ACOMMAND (ini(), x)
   val definition_fcn = fn x => ADEFINITION (ini(), x)
   

@@ -1,0 +1,73 @@
+
+
+datatype 'a anndat = 
+      ABOOLDAT of bool |
+      ACHARDAT of string |
+      ASTRIDAT of string |
+      ASYMBDAT of string |
+      ANUMBDAT of number |
+      AVECTDAT of 'a anndatum list |
+      ALISTDAT of 'a anndatum list |
+      AILISTDAT of 'a anndatum list * 'a anndatum
+withtype 'a anndatum = 'a * 'a anndat
+
+datatype 'a annexp =
+
+  ALITERAL of 'a anndatum |
+  AVARIABLE of 'a * variable |
+  ACALL of 'a * ('a annexp * ('a annexp) list) |
+  ALAMBDA of 'a * ('a annformals * 'a annbody) |
+  AIF of 'a * ('a annexp * 'a annexp * ('a annexp) Option) |
+  AASSIGN of 'a * (variable * 'a annexp)  |
+  ACOND of 'a * 'a anncond_clause_body |
+  ACASE of 'a * ('a annexp * 'a anncase_clause_body) |
+  AAND of 'a * ('a annexp) list |
+  AOR of 'a * ('a annexp) list |
+  ALET of 'a * (('a annbinding_spec) list * 'a annbody) |
+  ANAMEDLET of 'a * (variable * ('a annbinding_spec) list * 'a annbody) |
+  ALETS of 'a * (('a annbinding_spec) list * 'a annbody) |
+  ALETREC of 'a * (('a annbinding_spec) list * 'a annbody) |
+  ABEGIN of 'a * 'a annsequence |
+  ADO of 'a * (('a anniteration_spec) list * 'a annexp * 'a annsequence *
+         ('a annexp) list) |
+  ADELAY of 'a * 'a annexp |
+  AQUASIQUOTE of 'a * 'a anntemplate 
+and 'a anncond_clause_body =
+  ACONDCLAUSE of 'a * ('a anncond_clause * 'a anncond_clause_body) |
+  ANULLCOND of 'a |
+  ACONDDEFAULT of 'a * 'a annsequence 
+and 'a anncond_clause =
+  ATESTSEQ of 'a * ('a annexp * 'a annsequence) |
+  ATEST of 'a * 'a annexp |
+  ATESTREC of 'a * ('a annexp * 'a annexp) 
+and 'a anncase_clause_body =
+  ACASECLAUSE of 'a * ('a anncase_clause * 'a anncase_clause_body) |
+  ANULLCASE of 'a |
+  ACASEDEFAULT of 'a * 'a annsequence 
+and 'a anndefinition =
+  AVARDEF of 'a * (variable * 'a annexp) |
+  AFUNDEF of 'a * (variable * 'a annformals * 'a annbody) |
+  ABEGINDEF of 'a * ('a anndefinition) list 
+and 'a anntemplate =
+  ASIMPLETEMP of 'a anndatum |
+  ALISTTEMP of 'a * ('a anntemplate_or_splice) list |
+  AILISTTEMP of 'a * (('a anntemplate_or_splice) list * 'a anntemplate) |
+  AVECTEMP of 'a * ('a anntemplate_or_splice) list |
+  AUNQUOTE of 'a * 'a annexp 
+and 'a anntemplate_or_splice =
+  ATEMPLATE of 'a * 'a anntemplate |
+  AUNQSPL of 'a * 'a annexp 
+and 'a annformals =
+  AVARPAR of 'a * variable |
+  APAIRPAR of 'a * (variable * 'a annformals) |
+  ANULLPAR of 'a 
+withtype 'a annsequence = ('a annexp) list * 'a annexp
+and      'a annbody = ('a anndefinition) list * 'a annsequence
+and      'a anncase_clause = 'a anndatum list * 'a annsequence
+and      'a annbinding_spec = variable * 'a annexp
+and      'a anniteration_spec = variable * 'a annexp * ('a annexp) Option
+
+datatype 'a anncommand_or_definition =
+  ACOMMAND of 'a * 'a annexp |
+  ADEFINITION of 'a * 'a anndefinition 
+

@@ -533,7 +533,12 @@ structure SchemeEval: SCHEMEEVAL =
           (fn _ => raise EXIT))
 	]
 
+
   val v = push_top init_bindings
+
+
+
+
 
 fun SmlScheme ()  = 
     let fun eval_loop() =

@@ -23,6 +23,3 @@ use "dynamic.sml";  (* 6.2 Equivalence predicates and other parts *)
 use "environm.sml";
 use "ast.sml";
 use "eval.sml";
-use "annast.sml";
-exportML "DTScheme";
-
