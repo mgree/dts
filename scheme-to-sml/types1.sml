@@ -1,10 +1,17 @@
+(*$SchemeTypes: SchemeGeneral UnionFind *)
+
+structure SchemeTypes =
+  struct
+  local open SchemeGeneral UnionFind 
+  in
+
   (* TYPE TAGS *)
   
   datatype type_tag = FUNC | BOOL | NIL | PAIR | CHAR | SYMBOL |
-        STRING | NUMBER | VECTOR | UNSPEC 
+  	STRING | NUMBER | VECTOR | UNSPEC 
 
   val type_tags = [FUNC, BOOL, NIL, PAIR, CHAR, SYMBOL, 
-        STRING, NUMBER, VECTOR, UNSPEC]
+  	STRING, NUMBER, VECTOR, UNSPEC]
   
   datatype shade = WHITE | GREY | BLACK
 
@@ -17,7 +24,7 @@
   
   and attributes = 
     ATT of { equivptr: atype Option ref, 
-             generic: bool ref,
+    	     generic: bool ref,
              preds: atype list ref, 
              succs: atype list ref,
              pos: bool ref, 
@@ -25,13 +32,18 @@
              interpreted: bool ref,
              instance: atype Option ref, 
              instantiated: bool ref,
-             color: shade ref }
+	     color: shade ref }
 
   withtype atype = (utype * attributes) UF
+
+
+
+          
+
   
   fun make_attrib () = 
       ATT { equivptr = ref None, 
-            generic = ref false,
+      	    generic = ref false,
             preds = ref nil, 
             succs = ref nil,
             pos = ref false, 
@@ -39,12 +51,41 @@
             interpreted = ref false, 
             instance = ref None,
             instantiated = ref false,
-            color = ref WHITE }
+	    color = ref WHITE }
 
   (* selection functions *)
   fun utype (aty: atype) = #1 (!!aty)
   fun attributes aty = (case !!aty of (_, ATT atts) => atts)
   fun get f aty = f (attributes aty)
+
+
+
+  fun strlst2str l =
+      case l of
+        [] => ""
+      | x::xs => x^" "^(strlst2str xs)
+
+
+  fun tt2str tt =
+      case tt of
+        FUNC => "FUNC"
+      | BOOL => "BOOL"
+      | NIL => "NIL"
+      | PAIR => "PAIR"
+      | CHAR => "CHAR"
+      | SYMBOL => "SYMBOL"
+      | STRING => "STRING"
+      | NUMBER => "NUMBER"
+      | VECTOR => "VECTOR"
+      | UNSPEC => "UNSPEC"  
+
+  fun aty2str at =
+      case utype at of
+        TVAR i => "(TVAR "^(makestring i)^")"
+      | SIMPLE(tt, ats) => "("^(tt2str tt)^" "^(strlst2str (map aty2str ats))^")"
+      | DYN f => "(DYN "^(strlst2str (map (aty2str o f) type_tags))^")"
+
+
 
   (* make new type variables *)
   local 
@@ -73,12 +114,12 @@
   (* make a new dynamic type *)
   fun make_dyn_type l = 
       let fun make_dyn_function [] = (fn _ => new_typevar())
-            | make_dyn_function (a::r) =
-                    (case utype a of
-                           SIMPLE (tt, _) => 
-                                 (fn tt' => if tt = tt' then a else make_dyn_function r tt')
-                         | _ => error ("make_dyn_function", 
-                                           "Only simple types allowed in make_dyn_function"))
+    	    | make_dyn_function (a::r) =
+      		    (case utype a of
+         		   SIMPLE (tt, _) => 
+         		   	 (fn tt' => if tt = tt' then a else make_dyn_function r tt')
+       			 | _ => error ("make_dyn_function", 
+       			 	           "Only simple types allowed in make_dyn_function"))
       in make (DYN (make_dyn_function l), make_attrib()) 
       end
 
@@ -102,46 +143,59 @@
       in if equal(t1', t2')
             then ()
          else case (utype t1', utype t2') of
-                (DYN f, DYN f') => (union (t1', t2'); 
+                (DYN f, DYN f') => (debug("equiv :", "case DYN, DYN");
+                                    union (t1', t2'); 
                                     apply aliassimple (zip (summands f, summands f')))
               | (DYN f, SIMPLE (tt, _)) => 
-                                        (get #equivptr t2' := Some t1';
-                                         aliassimple (f tt, t2))
-              | (DYN _, TVAR _) => get #equivptr t2' := Some t1'
+              				(debug("equiv :", "case DYN, SIMPLE");
+                                         get #equivptr t2' := Some t1';
+              				 aliassimple (f tt, t2))
+              | (DYN _, TVAR _) => (debug("equiv :", "case DYN, TVAR");
+                                    get #equivptr t2' := Some t1')
               | (SIMPLE (tt, _), DYN f) => 
-                                        (get #equivptr t1' := Some t2';
-                                         aliassimple (t1, f tt))
+              				(debug("equiv :", "case SIMPLE, DYN");
+                                         get #equivptr t1' := Some t2';
+              				 aliassimple (t1, f tt))
               | (SIMPLE (tt, _), SIMPLE (tt', _)) => 
+                  (debug("equiv :", "case SIMPLE, SIMPLE"); 
                    if tt = tt' then
                       aliassimple (t1, t2)
                    else let val rd = make_dyn_type [t1', t2']
                         in (get #equivptr t1' := Some rd;
                             get #equivptr t2' := Some rd)
-                        end
-              | (SIMPLE _, TVAR _) => get #equivptr t2' := Some t1'
-              | (TVAR _, DYN _) => get #equivptr t1' := Some t2'
-              | (TVAR _, SIMPLE _) => get #equivptr t1' := Some t2'
-              | (TVAR _, TVAR _) => get #equivptr t1' := Some t2'
+                        end)
+              | (SIMPLE _, TVAR _) => (debug("equiv :", "case SIMPLE, TVAR");
+                                       get #equivptr t2' := Some t1')
+              | (TVAR _, DYN _) => (debug("equiv :", "case TVAR, DYN");
+                                    get #equivptr t1' := Some t2')
+              | (TVAR _, SIMPLE _) => (debug("equiv :", "case TVAR, SIMPLE"); 
+                                       get #equivptr t1' := Some t2')
+              | (TVAR _, TVAR _) => (debug("equiv :", "case TVAR, TVAR");
+                                     get #equivptr t1' := Some t2')
       end
   and aliassimple (t1, t2): unit =
       if equal (t1, t2) 
          then ()
       else case (utype t1, utype t2) of
              (SIMPLE (_, tlist), SIMPLE (_, tlist')) =>
-                                (union (t1, t2);
+				(debug("aliassimple :","<"^(aty2str t1)^","^
+                                                    (aty2str t2)^">");
+                 union (t1, t2);
                  apply aliasvar (zip (tlist, tlist')))
            | (TVAR _, SIMPLE _) => link (t1, t2)
            | (SIMPLE _, TVAR _) => link (t2, t1)
            | (TVAR _, TVAR _) => union (t1, t2)
            | (_,_) => error ("aliassimple", "Illegal type aliasing attempted")
   and aliasvar (t1, t2): unit =
-          if equal (t1, t2)
-                 then ()
-          else case (utype t1, utype t2) of
-                     (TVAR _, TVAR _) => (union (t1, t2);
-                                                          equiv (t1, t2))
-                   | (_, _) => error ("aliasvar", "Arguments must be type variables!")
-                   
+  	  if equal (t1, t2)
+  	  	 then ()
+  	  else case (utype t1, utype t2) of
+  	  	     (TVAR _, TVAR _) => (union (t1, t2);
+  	  	     					  equiv (t1, t2))
+  	  	   | (_, _) => (debug("aliasvar :", "<"^(aty2str t1)^","^
+                                                    (aty2str t2)^">");
+                               error ("aliasvar", "Arguments must be type variables!"))
+  	  	   
   fun unify (t1, t2) =
       if equal (t1, t2) 
          then ()

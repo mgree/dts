@@ -1,0 +1,59 @@
+(1) 
+
+Input : ((lambda (x) (if x 1 1))  1)
+
+Output : no coercions inserted
+
+Comment : This is wrong
+
+
+(2)
+
+Input : ((lambda x (x 1)  1)
+
+Output : Coercions inserted
+
+Comment : This is right. Comparing with (1) may suggest that
+          the problem lies in handling complex parameter patterns.
+
+
+
+(3)
+
+Input : (if #t #t 1)
+
+Output : Coercions are inserted
+
+Comment : This is right
+
+
+(4)
+
+Input : (if #t '(1 . 2) '(#t . #f))
+
+Output : No coercions inserted
+
+Comment : This is wrong. Comparing with (3) appears to suggest
+          that something is wring with unification for
+          induced flow. Perhaps the problem is related to
+          the problem in (1) (?)
+
+
+(5)
+
+Input : (1 1)
+
+Output : Coercions inserted
+
+Comment : This is right.
+
+
+(6)
+
+Input : (((lambda x x) 1)  1)
+
+Output : No coercions inserted
+
+Comment : Again, the problem appears to come with more complex flow.
+
+

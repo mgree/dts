@@ -51,9 +51,9 @@ structure KernelConstraints =
   fun assign (a,v,e) = APPEND [constraints a, e]
   fun pairarg (a,e,l) = APPEND [constraints a, e, l]
   fun nullarg a = constraints a
-  fun avarpar (a,p) = ()
-  fun apairpar (a,p,f) = ()
-  fun anullpar a = ()
+  fun avarpar (a,p) = constraints a
+  fun apairpar (a,p,f) = APPEND [constraints a, f]
+  fun anullpar a = constraints a
   val constraints_hom = EHOM { noexp = noexp,
                    literal = literal,
                    variable = variable,

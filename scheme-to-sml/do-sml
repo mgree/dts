@@ -1,0 +1,3 @@
+System.Print.printDepth := 100;
+System.Print.printLength := 100;
+System.Print.stringDepth := 1000;

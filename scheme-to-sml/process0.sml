@@ -1,5 +1,13 @@
+structure SchemeProcess =
 (* Do the whole process *)
 
+struct
+
+  local open KernelParse KernelAttributes KernelVarUsage
+             KernelConstraints KernelUnify SchemeTypes
+             SchemeTypeInterpret KernelPrettyPrint
+             SchemeVariables Environment SchemeGeneral
+in
 fun process ip =   
     let val ue = parse ip (* parse input stream into an unattributed expression *) 
         val ae = make_attributes ue empty_env (* translate unattributed expression into att. exp. *)
@@ -16,5 +24,16 @@ fun process ip =
 	preds_succs C; (* set predecessor and successor attributes in each type *)
         propagate (toptype::UUsedBtvars, Ftvars); (* propagate +/- labels through SVFG *)
         typeint C; (* interpret the types in C *)
-        display ae) 
+        ae ) 
     end
+
+
+    fun complete ip = 
+        let val ae = process ip 
+        in
+            display ae
+        end
+
+
+end
+end

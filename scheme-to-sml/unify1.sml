@@ -5,6 +5,8 @@ structure KernelUnify =
 
   local   
   open SchemeDatum KernelExp SchemeTypes SchemeCoercions
+       UnionFind SchemeGeneral SchemeVariables
+
   fun booldat (a,b) = hi_type a before link (lo_type a, bool())
   fun chardat (a,c) = hi_type a before link (lo_type a, char())
   fun stridat (a,c) = hi_type a before link (lo_type a, string())
@@ -32,10 +34,10 @@ structure KernelUnify =
   fun variable (a, (LAMBOUND (_, t), _)) = hi_type a before link (lo_type a, t)
     | variable (a, (FREE (_,t), _)) = hi_type a before link (lo_type a, t)
     | variable _ = raise Unimplemented "variable, in unify_types" 
-  fun call (a,e,l) = hi_type a before link (e, func(l, lo_type a))
-  fun lambda (a,f,e) = hi_type a 
+  fun call (a,e,l) = hi_type a before link(e, func(l, lo_type a))
+  fun lambda (a,f,e) = hi_type a  
   fun ifexp (a,e,e',e'') = hi_type a before (union (e', e'');
-                                             union (lo_type a, e');
+                                             union (lo_type a, e'); 
                                              link (e, bool()))
   fun assign (a,(LAMBOUND (_, t), _),e) = hi_type a before (link (lo_type a, unspec());
                                         link (e, t)) 
