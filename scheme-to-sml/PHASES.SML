@@ -252,7 +252,6 @@ end;
   local
   open SchemeGeneral Type UnionFind Environment
   fun equiv (t1, t2): unit =
-      (debug ("equiv", "call");
       let val t1' = ecr t1
           val t2' = ecr t2
       in if equal(t1', t2')
@@ -279,9 +278,8 @@ end;
               | (TVAR _, DYN _) => elink (t1', t2')
               | (TVAR _, SIMPLE _) => elink (t1', t2')
               | (TVAR _, TVAR _) => elink (t1', t2')
-      end)
+      end
   and aliassimple (t1, t2) =
-      (debug ("aliassimple", "call");
       if equal (t1, t2)
       then ()
       else case (utype t1, utype t2) of
@@ -292,9 +290,8 @@ end;
            | (SIMPLE _, TVAR _) => elink(t2, t1)
            | (TVAR _, SIMPLE _) => elink(t1, t2)
            | (TVAR _, TVAR _) => elink(t1, t2)
-           | _ => error ("aliassimple", "No dyn types allowed"))
+           | _ => error ("aliassimple", "No dyn types allowed")
   and aliasvar (t1, t2): unit =
-	  (debug ("aliasvar", "call");
   	  if equal (t1, t2)
   	  then ()
   	  else case (utype t1, utype t2) of
@@ -308,7 +305,7 @@ end;
   	  	    		   union (t1, t2); equiv (t1, t2) !!! 
   	  	    	   Don't touch this code; it'll surely break if you do -- 
   	  	    	   guaranteed *)
-  	  	   | (_, _) => error ("aliasvar", "Arguments must be type variables!"))
+  	  	   | (_, _) => error ("aliasvar", "Arguments must be type variables!")
   in  	  	   
   val induced_unify = foreach equiv
   end;
@@ -386,6 +383,7 @@ fun make_acyclic C =
     (foreach (fn (t1,t2) => (visit (t1, []))) C;
      foreach (fn (t1,t2) => (union (t1, sccrep t1);
      			             union (t2, sccrep t2))) C)
+val reset_shade = foreach (fn t => get #color t := WHITE)
 end;
 
 (* 8th stage: Propagate sources and sinks: types that can be reached
@@ -483,18 +481,29 @@ fun propagate_sinks nil = ()
 
 (* 9th stage: Interpret types as follows: 
 	      pos/neg labeled type variables remain type variables;
-	      they get unified with pos/neg labeled predecessors, however 
+	      they get unified with pos/neg labeled predecessors, however; 
 	      Other types get interpreted by unifying them with 
 	      intersection of their source type and their sink type *)
 
 open UnionFind
+
+fun contract e =
+    (* deletes PAIR type from e if it also
+       contains a LST type *)
+    if iskey LST e 
+    then delete PAIR e
+    else e		 
+	
 fun interpret_type t =
     let val neg = !(get #neg t)
         val pos = !(get #pos t)
         val sources = !(get #sources t)
+        val csources = contract sources
         val sinks = !(get #sinks t)
+        val csinks = contract sinks
         val interpreted = get #interpreted t
         val preds = !(get #preds t)
+        val succs = !(get #succs t)
     in if !interpreted 
        then ()
        else (interpreted := true;
@@ -504,7 +513,11 @@ fun interpret_type t =
              | TVAR _ =>
                  (case (pos, neg) of
                    (true, true) =>
-                      apply (fn tpr =>
+                   	(case (keys csources, keys csinks) of
+                   	   (_::_::_, _::_::_) => 
+                   	   	 link(t, make_dyn_type (values sources @ values sinks))
+                   	 | (_::_::_, _) =>
+                   	   apply (fn tpr =>
 		                case utype tpr of
 			              TVAR _ =>
 			                if !(get #pos tpr) andalso !(get #neg tpr)
@@ -512,15 +525,25 @@ fun interpret_type t =
 			                else ()
                         | SIMPLE _ => ()
 			            | DYN _ => error ("interpret_type", 
-					                      "Must not be a DYN type")) preds
+					                      "Must not be a DYN type (forward)")) succs
+					 | _ => 
+                       apply (fn tpr =>
+		                case utype tpr of
+			              TVAR _ =>
+			                if !(get #pos tpr) andalso !(get #neg tpr)
+			                then union (t, tpr)
+			                else ()
+                        | SIMPLE _ => ()
+			            | DYN _ => error ("interpret_type", 
+					                      "Must not be a DYN type (backward)")) preds)
                  | (true, false) => 
-                      (case keys sources of
+                      (case keys csources of
 		                 nil => error ("interpret_type", 
 					                   "No sources -- impossible!")
 	 	               | [tt] => link(t, lookup tt sources)
                        | _ => link(t, make_dyn_type (values sources)))
                  | (false, true) =>
-                      (case keys sinks of
+                      (case keys csinks of
 		                 nil => error ("interpret_type",
 					                   "No sinks -- impossible!")
 	                   | [tt] => link(t, lookup tt sinks)
@@ -533,6 +556,33 @@ fun interpret_type t =
 		                 | _ => link(t, make_dyn_type (values ienv))
   	                  end))
       end
+
+local
+val rec_counter = ref 0
+in
+fun new_name () =
+    "REC" ^ Int.string (!rec_counter) before rec_counter := !rec_counter + 1
+end
+
+fun mark_rec_type t =
+    let val color = get #color t 
+    in case !color of 
+    	WHITE => (color := GREY;
+				  (case utype t of
+				  	TVAR _ => ()
+				  | SIMPLE (_, tlist) => 
+				  	   apply mark_rec_type tlist
+				  | DYN f => 
+				       apply mark_rec_type (summands f));
+				  color := BLACK)
+	  | GREY => let val name = get #name t
+	            in case !name of
+	  		  	     Some _ => ()
+	  			   | None => name := Some (new_name())
+	  			end
+	  | BLACK => ()
+    end
+     
 in
 fun set_sources N =
     let val sources = find_sources (aflatten [N])
@@ -543,6 +593,9 @@ fun set_sinks N =
     in propagate_sinks sinks
     end
 val set_types = foreach interpret_type
+fun mark_rec_types N = 
+    (foreach (fn t => get #color t := WHITE) N;
+    foreach mark_rec_type N)
 end;
 
 
@@ -569,205 +622,31 @@ local
 open Environment Type PolyType
 fun tlist nil = unit()
   | tlist (a::ts) = pair(a, tlist ts)
+fun funcl (l, t) = func (tlist l, t)
 in
 val topenv = list2env
     [ ("cons", let val nt1 = new_typevar()
     		       val nt2 = new_typevar()
-    		   in close ([], func(tlist [nt1, nt2], pair(nt1, nt2)))
+    		   in close ([], funcl ([nt1, nt2], pair(nt1, nt2)))
     		   end),
       ("car", let val nt1 = new_typevar()
       		      val nt2 = new_typevar()
-      		  in close ([], func(tlist [pair(nt1,nt2)], nt1))
+      		  in close ([], funcl ([pair(nt1,nt2)], nt1))
       		  end),
       ("cdr", let val nt1 = new_typevar()
                   val nt2 = new_typevar()
-              in close ([], func(tlist [pair(nt1,nt2)], nt2))
+              in close ([], funcl ([pair(nt1,nt2)], nt2))
               end),
-      ("null?", let val nt1 = new_typevar()
-                    val nt2 = new_typevar()
-                in close ([], func(tlist [make_dyn_type [unit(), 
-                			   pair(nt1,nt2)]], bool()))
-                end)]
+      ("null?", let val nt = new_typevar()
+      		    in close ([], funcl ([listtype nt], bool()))
+      		    end)]
 end
 
 
-(* ALTERNATIVE CONTINUATION AFTER 7th stage *)
-
-(* 8th stage: determine definitely used and not definitely used variables *)
-
-  local 
-  open SchemeGeneral Exp Type Coercion
-
-  fun split v EMPTYAO = (false, EMPTYAO)
-    | split v (T as (SINGLE v')) = 
-        if v = v' 
-           then (true, EMPTYAO)
-        else (false, T)
-    | split v (OR (T1, T2)) =
-        let val (b1, T1') = split v T1
-            val (b2, T2') = split v T2
-        in (b1 andalso b2, 
-            if T1' = EMPTYAO andalso T2' = EMPTYAO
-               then EMPTYAO
-            else OR (T1', T2'))
-        end
-    | split v (AND (T1, T2)) =
-        let val (b1, T1') = split v T1
-            val (b2, T2') = split v T2
-        in (b1 orelse b2,
-            if T1' = EMPTYAO 
-               then T2'
-            else if T2' = EMPTYAO
-                    then T1'
-                 else AND (T1', T2'))
-        end
-
-  fun noexp a = (EMPTYAO, anil)
-  fun literal d = (EMPTYAO, anil)
-  fun variable (a, (s, _)) = (SINGLE s, anil)
-  fun call (a,(e,ev),(l,lv)) = (AND (e,l), APPEND [ev,lv])
-  fun lambda (a,f,e) = 
-        fold (fn ((s,t),(T,ts)) => 
-                 let val (b, T') = split s T
-                 in (T', if b then ts else APPEND [leaf t, ts])
-                 end) f e
-  fun ifexp (a,(e,ev),(e',ev'),(e'',ev'')) = 
-  		(AND (e, OR(e',e'')), APPEND [ev, ev', ev'']) 
-  fun assign (a, _ ,e) = e
-  fun pairarg (a,(e,ev),(l,lv)) = (AND (e,l), APPEND [ev, lv])
-  fun nullarg a = (EMPTYAO, anil)
-  fun avarpar p = [p]
-  fun apairpar (p,f) = p::f
-  fun anullpar () = []
-  val use_hom = EHOM { noexp = noexp,
-                   literal = literal,
-                   variable = variable,
-                   call = call,
-                   lambda = lambda,
-                   ifexp = ifexp,
-                   assign = assign,
-	           avarpar = avarpar,
-                   apairpar = apairpar,
-                   anullpar = anullpar,
-		   pairarg = pairarg,
-                   nullarg = nullarg}
-
-
-  val free_vars_unused_tvars_exp = apply_ehom use_hom
-
-  fun free_vars_unused_tvars_def (tv, e) = free_vars_unused_tvars_exp e
-
-(*
-  fun free_vars_unused_tvars program = map free_vars_unused_tvars_def program 
-*)
-
-
-  (* 9th stage: propgate pos/neg attributes through SVFG *)
-
-  fun propagate ([], []) = ()
-    | propagate (tp::rp, ln) =
-        let val tatts = attributes tp
-            val posptr = #pos tatts
-        in if !posptr then 
-              propagate (rp, ln)
-           else (posptr := true ; 
-                (case utype tp of
-                   TVAR _ =>
-                     propagate (!(#preds tatts) @ rp, ln)
-                 | SIMPLE (FUNC, [td,tr]) =>
-                     propagate (tr::rp, td::ln)
-                 | SIMPLE (_, tlist) =>
-                     propagate (tlist @  rp, ln)
-                 | _ => error 
-                   ("Not a variable or simple type in propagate", "pos")))
-        end
-    | propagate ([], tn::rn) = 
-       let val tatts = attributes tn
-            val negptr = #neg tatts
-        in if !negptr then 
-              propagate ([], rn)
-           else (negptr := true ; 
-                (case utype tn of
-                   TVAR _ => 
-                     propagate ([], !(#succs tatts) @ rn)
-                  | SIMPLE (FUNC, [td,tr]) =>
-                     propagate ([td], tr::rn)
-                 | SIMPLE (_, tlist) =>
-                     propagate ([], tlist @ rn)
-                 |  _ => error 
-                   ("Not a variable or simple type in propagate", "neg")))
-        end
-  in
-  fun tvar_usage_exp (ae, t) = 
-  	propagate (t :: aflatten [#2 (free_vars_unused_tvars_exp ae)], [])
-  fun tvar_usage_def (DEFINE ((_, t), ae)) = 
-  	  tvar_usage_exp (ae, t)
-
-  end;
-
-
-(* 10th stage: interpret types according to information collected *)
-
-  local open SchemeGeneral UnionFind Type Constraint
-
-  fun interpret t =
-    let val interp = get #interpreted t
-    in
-    if !interp 
-       then () 
-    else
-    (get #interpreted t := true;
-    case utype t of
-      SIMPLE (tt, tlist) => apply interpret tlist 
-    | DYN f => apply interpret (summands f)
-    | TVAR _ => 
-       let val tequiv = ecr t
-       in
-       (case utype tequiv of
-         TVAR _ => link (t, tequiv)
-       | SIMPLE _ => let val atts = attributes t
-                     in if !(#pos atts) andalso !(#neg atts)
-                           then apply (fn tpr => 
-                                       case utype tpr of
-                                         TVAR _ => 
-                                           let val attstpr = attributes tpr
-                                           in if !(#pos attstpr) andalso
-                                                 !(#neg attstpr) 
-                                              then union (t, tpr)
-                                              else ()
-                                           end
-                                        | SIMPLE _ => ()
-                                        | _ => error ("interpret", 
-                                               "Must not be a DYN type"))
-                                      (!(#preds atts))
-                            else link (t, tequiv)
-                     end
-       | DYN f => link (t, tequiv))
-       end)
-    end
-  in
-  val type_int = foreach (fn (t1,t2) => (interpret t1; interpret t2))
-  end;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+(* Old type for null?:
+				let val nt1 = new_typevar()
+                    val nt2 = new_typevar()
+                in close ([], func(tlist [make_dyn_type [unit(), 
+                			   pair(nt1,nt2)]], bool()))
+                end *)
 

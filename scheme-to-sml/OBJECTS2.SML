@@ -8,16 +8,17 @@ structure Type =
 
   (* TYPE TAGS *)
 
-  datatype type_tag = FUNC | BOOL | NIL | PAIR | CHAR | SYMBOL |
-                      STRING | NUMBER | VECTOR | UNSPEC 
+  datatype type_tag = FUNC | BOOL | PAIR | CHAR | SYMBOL |
+                      STRING | NUMBER | VECTOR | 
+                      LST | UNSPEC
 
-  val type_tags = [FUNC, BOOL, NIL, PAIR, CHAR, SYMBOL, 
-        	       STRING, NUMBER, VECTOR, UNSPEC]
-
+  val type_tags = [FUNC, BOOL, PAIR, CHAR, SYMBOL, 
+        	       STRING, NUMBER, VECTOR, LST, UNSPEC]
+		
   datatype shade = WHITE | GREY | BLACK
 
   datatype PPtype = SIM of type_tag * PPtype list |
-                    DYNAMIC of  PPtype list |
+                    DYNAMIC of PPtype list |
                     TYVAR of int  |
                     MORE
 
@@ -43,7 +44,8 @@ structure Type =
              interpreted: bool ref,
              collected: bool ref,
              instance: atype Option ref, 
-             color: shade ref }
+             color: shade ref,
+             name: string Option ref }
 
   withtype atype = (utype * attributes) uref
 
@@ -62,7 +64,8 @@ structure Type =
             interpreted = ref false, 
             collected = ref false,
             instance = ref None,
-            color = ref WHITE }
+            color = ref WHITE,
+            name = ref None }
 
   (* selection functions *)
 
@@ -92,14 +95,14 @@ structure Type =
   fun number() = make_type (NUMBER, [])
   fun vector t = make_type (VECTOR, [t])
   fun pair(t1,t2) = make_type (PAIR, [t1,t2])
-  fun unit() = make_type (NIL, [])
   fun unspec() = make_type (UNSPEC, [])
   fun func(t1,t2) = make_type (FUNC, [t1,t2])
+  fun listtype t = make_type (LST, [t])
+  fun unit() = listtype (new_typevar())
 
   (* make a new dynamic type *)
 
   fun make_dyn_type l =
-  	  (debug ("make_dyn_type", "call");
       let val bindings = map (fn tt => (tt, new_typevar())) type_tags
           fun undef tt = error ("make_dyn_type", "Undefined type_tag -- impossible")
           fun upd ((tt, at), f) x = if x = tt then at else f x
@@ -111,41 +114,30 @@ structure Type =
           val init = fold upd bindings undef
   	  in
   	  uref (DYN (fold upd_simple l init), make_attrib())
-  	  end)
+  	  end
 
   fun summands f = 
-     (debug ("summands", "call"); 
       fold (fn (tt, l) => 
                let val potsummand = f tt
                in case utype potsummand of
       		        SIMPLE _ => potsummand :: l
       		      | TVAR _ => l
       		      | DYN _ => error ("summands", "Illegal summand (dyn type)")
-      		   end) type_tags nil)  
+      		   end) type_tags nil 
 
   (* find equiv representative of annotated type *)
 
  fun ecr t = 
-      (debug ("ecr", "call");
       let val equivptr = get #equivptr t
       in case !equivptr of
            None => t
          | Some t' => let val t'' = ecr t'
                       in (equivptr := Some t''; t'')
                       end
-      end)
+      end
       
  (* Precondition for elink: t1, t2 must both be equiv-representatives *)
- fun elink(t1,t2) = 
-     let val t1' = ecr t1
-         val t2' = ecr t2
-     in
-     (case (!(get #equivptr t1'), !(get #equivptr t2')) of
-     	(None, None) => (debug ("elink", "okay");
-     				     get #equivptr t1' := Some t2')
-      | (_, None) => (debug ("elink", "not okay"); error ("elink", ""))
-      | (_,_) => (debug ("elink", "Definitely wrong"); error ("elink", "")))
-     end
+ fun elink(t1,t2) = get #equivptr t1 := Some t2
 
  fun sccrep t =
       let val sccptr = get #sccptr t
@@ -226,12 +218,23 @@ structure Constraint =
           | SIMPLE (FUNC, [td, tr]) =>
                   let val (ntd, Cd) = decompose (not b) td 
                           val (ntr, Cr) = decompose b tr
-                          val nstype = make_type (FUNC, [ntd, ntr])
+                          val nstype = func (ntd, ntr)
                           val ntvar = new_typevar()
                           val topconstraint =
                                 if b then (nstype, ntvar) else (ntvar, nstype)
-                  in (ntvar, APPEND [Cd, Cr, leaf topconstraint])
+                  in (ntvar, APPEND [leaf topconstraint, Cd, Cr])
                   end
+          | SIMPLE (LST, [at]) =>
+          		  let val (nt, C) = decompose b at
+          		      val nstype = listtype nt
+          		      val ntvar = new_typevar()
+          		      val ty = new_typevar()
+          		      val topconstraints =
+          		      	  if b then [(nstype, ntvar), (ty, ntvar)]
+          		      	       else [(ntvar, nstype), (ntvar, ty)]
+          		  in (get #equivptr nstype := Some (pair(nt, ty));
+          		      (ntvar, APPEND [LIST topconstraints, C]))
+          		  end
           | SIMPLE (ttag, atl) =>
                   let val tCs = map (decompose b) atl
                       val nstype = make_type (ttag, map #1 tCs)
@@ -272,7 +275,7 @@ end;
 
 structure PolyType =
   struct
-  local open Type Constraint Coercion SchemeGeneral 
+  local open Type Constraint Coercion SchemeGeneral UnionFind
   in
 
   datatype typescheme =
@@ -313,31 +316,27 @@ structure PolyType =
      let
      val insttypes = ref []
      fun inst at =
-      let val instance = get #instance at
-      in case !instance of
-           None => let val nt = new_typevar()
-                   in instance := Some nt;
-                      insttypes := at :: !insttypes;
-                      case utype at of
-                        TVAR _ => n
-							
-                     SIMPLE (tt, tlist) => 
-                       let val it = make_type (tt, map inst tlist) 
-                       in #instance atts := Some it
-                       end |
-                     DYN f => 
-                       let val it = make_dyn_type (map inst (summands f))
-                       in #instance atts := Some it
-                       end)
-          else ()
-      end
-     fun get_inst aty =
+       if !(get #generic at) 
+       then let val instance = get #instance at
+       	    in case !instance of
+          	     None => let val nt = new_typevar()
+                 		 in instance := Some nt;
+                     	    insttypes := at :: !insttypes;
+                     	    (case utype at of
+                       	        TVAR _ => ()
+					  		  | SIMPLE (tt, tlist) => 
+					  			  link (nt, make_type (tt, map inst tlist))
+                      	      | DYN f => 
+                         		  link (nt, make_dyn_type (map inst (summands f))));
+                     	    nt
+	                     end
+	           | Some it => it
+	        end
+	   else at
      val C' = map (fn (t1, t2) => (inst t1, inst t2)) C
      val t' = inst t 
-     in (apply (fn aty => let val atts = attributes aty
-    			         in#instantiated atts := false
-    			         end) (!insttypes);
-        (C', t'))
+     in apply (fn at => get #instance at := None) (!insttypes);
+        (C', t')
      end
    | instantiate (TYPE aty) = ([], aty)
 

@@ -40,7 +40,7 @@ structure SchemeGeneral (*: SCHEMEGENERAL *) =
       in (rev fsts, rev snds)
       end
 
-  fun foldappend ls = fold op@ ls nil
+  fun flatten ls = fold op@ ls nil
 
   fun member x [] = false
     | member x (y::tl) = if x=y then true else (member x tl)
@@ -94,10 +94,12 @@ structure Environment =
   fun add (e,e') = e' @ e
 
   fun extend (e,s,v) = (s,v) :: e
-
-  val keys = map fst  
   
-  val values = map snd
+  fun delete k nil = nil
+    | delete k ((b as (k',_))::r) =
+    	if k = k' 
+    	then delete k r
+    	else (b:: delete k r)
 
   exception Lookup 
   fun lookup s [] = raise Lookup
@@ -106,6 +108,17 @@ structure Environment =
 
   fun iskey s e = (true before lookup s e) handle Lookup => false
   
+  fun keys e = 
+      let fun keysacc sofar nil = sofar
+            | keysacc sofar ((k,_)::r) =
+            	if member k sofar
+            	then keysacc sofar r
+            	else keysacc (k::sofar) r 
+      in keysacc nil e
+      end 
+  
+  fun values e = map (fn k => lookup k e) (keys e)
+
   end
   end;
 
@@ -128,10 +141,10 @@ struct
 
   exception UnionFind of string
 
-  datatype 'a UFC = 
+  datatype 'a UF = 
         ECR of 'a * int
-      | PTR of 'a UF
-  withtype 'a UF = 'a UFC ref
+      | PTR of 'a uref
+  withtype 'a uref = 'a UF ref
 
   fun find (p as ref (ECR _)) = p
     | find (p as ref (PTR p')) =
@@ -139,7 +152,7 @@ struct
          in (p := PTR p''; p'')
          end
 
-  fun make x = ref (ECR (x, 0))
+  fun uref x = ref (ECR (x, 0))
 
   fun !! p = 
       case !(find p) of
