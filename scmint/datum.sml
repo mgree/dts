@@ -1,50 +1,6 @@
-signature DATUM =
-  sig 
-  
-  datatype datum =
-      BOOLDAT of bool |
-      CHARDAT of string |
-      STRIDAT of string |
-      SYMBDAT of string |
-      NUMBDAT of string |
-      VECTDAT of datum list |
-      PAIRDAT of datum * datum |   
-      NILDAT  
-
-  datatype 'd hom =
-      DHOM of { booldat: bool -> 'd,
-                chardat: string -> 'd,
-                stridat: string -> 'd,
-                symbdat: string -> 'd,
-                numbdat: string -> 'd,
-                vectdat: 'd list -> 'd,
-                pairdat: 'd * 'd -> 'd,
-                nildat: unit -> 'd 
-              }
-
-  val apply: 'd hom -> datum -> 'd
-
-  exception ReadError of string * string
-  exception EOF
-  val read: instream -> datum
-  val write: outstream -> datum -> unit
-
-  end
-  
-  
 structure Datum: DATUM =
   struct
-
-  datatype 'd hom =
-      DHOM of { booldat: bool -> 'd,
-                chardat: string -> 'd,
-                stridat: string -> 'd,
-                symbdat: string -> 'd,
-                numbdat: string -> 'd,
-                vectdat: 'd list -> 'd,
-                pairdat: 'd * 'd -> 'd,
-                nildat: unit -> 'd 
-              }
+  open Error
 
   datatype datum =
       BOOLDAT of bool |
@@ -55,19 +11,6 @@ structure Datum: DATUM =
       VECTDAT of datum list |
       PAIRDAT of datum * datum |   
       NILDAT  
-
-  fun apply (DHOM D) = 
-      let fun dapply (BOOLDAT x) = #booldat D x
-            | dapply (CHARDAT x) = #chardat D x
-            | dapply (STRIDAT x) = #stridat D x
-            | dapply (SYMBDAT x) = #symbdat D x
-            | dapply (NUMBDAT x) = #numbdat D x
-            | dapply (VECTDAT dl) = #vectdat D (map dapply dl)
-            | dapply (PAIRDAT (d1, d2)) = #pairdat D (dapply d1, dapply d2)
-            | dapply NILDAT = #nildat D () 
-      in dapply 
-      end
-
 
   datatype token =
       Identifier of string
@@ -85,14 +28,11 @@ structure Datum: DATUM =
     | DotSym
     | EndOfInput
 
-  exception ReadError of string * string
-  exception EOF
-
   fun read ip = 
       let val read_so_far = ref ""
           fun read_error msg =
               (input_line ip;
-               raise ReadError (msg, !read_so_far))
+               raise IOError (msg, !read_so_far))
           fun get_next_char() =
               let val next_char = input(ip,1)
               in
@@ -245,11 +185,11 @@ structure Datum: DATUM =
       in 
          let val tok = get_next_token() in
              case tok of 
-                  EndOfInput => raise EOF
+                  EndOfInput => raise EndOfFile
              |    _ => parse_datum(tok) (* before input_line ip *)
          end
       end
 
-  fun write os d = raise General.Unimplemented "Datum.write" 
+  fun write os d = raise Unimplemented "Datum.write" 
 	
   end

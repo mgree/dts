@@ -1,30 +1,9 @@
-signature INTERPRET =
-  sig
- 
- type command
- type value
- type env 
-
- exception RuntimeError of string 
- val top_env: env ref
- val eval: command -> value
- val command_loop: instream * outstream -> unit
- val scheme: unit -> unit
-
-end
-
-functor Interpret (Runtime: RUNTIME) =
+structure Eval: EVAL =
   struct
+  open Error Object Datum Command Environment Basis
 
-  type command = Command.command
-  type value = Dynamic.dynamic
-  type env = Environment.env
+  type command = command
 
-  exception RuntimeError of string
-
-  local
-  open Datum Dynamic
-  in
   fun eval_datum (BOOLDAT b) = BOOL_TAG b
     | eval_datum (CHARDAT c) = CHAR_TAG (Character.str2char c)
     | eval_datum (STRIDAT s) = STRING_TAG (String.str2sstring s)
@@ -34,19 +13,14 @@ functor Interpret (Runtime: RUNTIME) =
     | eval_datum (PAIRDAT (d1, d2)) = 
 	PAIR_TAG (Pair.cons (eval_datum d1, eval_datum d2))
     | eval_datum NILDAT = LIST_TAG nil
-  end
 
-  local 
-  open Environment 
-  in
-  val top_env = ref (push empty_env Basis.bindings)
+  val base_env = push empty_env bindings
+  val top_env = ref base_env
+  fun init_env () = (top_env := base_env)
+
   fun get_value (v, env) = 
 	lookup env v handle Lookup _ => lookup (!top_env) v 
-  end
 
-  local
-  open Command Dynamic Environment
-  in
   fun eval_exp env (LITERAL d) = eval_datum d
     | eval_exp env (VARIABLE v) = get_value (v, env)
     | eval_exp env (CALL (f, a)) = 
@@ -207,9 +181,9 @@ functor Interpret (Runtime: RUNTIME) =
       eval_definition (BEGINDEF dl) = app eval_definition d
   fun eval (EXP e) = eval_exp empty_env e 
       eval (DEF d) = (eval_definition d; unspecified
-  fun command_loop (is, os, es) =
-      ((output (es, "> ")
-        Dynamic.write (eval (Command.parse (Datum.read is)), os)) handl
+  fun read_eval_loop () =
+      ((output (current_output_port(), "> ");
+        write (eval (Command.parse (Datum.read is)), os)) handl
            Datum.ReadError (m, is) => output(es, m ^ ": " ^ is)
          | Command.ParseError (m, d) =
 		(output(es, m ^ ":\n"); Dynamic.write (eval_datum d, es)
@@ -225,4 +199,3 @@ functor Interpret (Runtime: RUNTIME) =
   fun scheme () = command_loop (std_in, std_out, std_out
   en
   en
-
