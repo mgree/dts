@@ -1,16 +1,19 @@
-(*$KernelTypes: SchemeGeneral UnionFind *)
+(*$SchemeTypes: SchemeGeneral UnionFind *)
 
-structure KernelTypes (*: KERNELTYPES *) =
+structure SchemeTypes =
   struct
   local open SchemeGeneral UnionFind 
   in
 
   (* TYPE TAGS *)
   
-  datatype type_tag = FUNC | BOOL | NIL | PAIR | UNSPEC
+  datatype type_tag = FUNC | BOOL | NIL | PAIR | CHAR | SYMBOL |
+  	STRING | NUMBER | VECTOR | UNSPEC 
 
-  val type_tags = [FUNC, BOOL, NIL, PAIR, UNSPEC]
+  val type_tags = [FUNC, BOOL, NIL, PAIR, CHAR, SYMBOL, 
+  	STRING, NUMBER, VECTOR, UNSPEC]
   
+  datatype shade = WHITE | GREY | BLACK
 
   (* DYNAMIC TYPES *)
   
@@ -28,7 +31,8 @@ structure KernelTypes (*: KERNELTYPES *) =
              neg: bool ref, 
              interpreted: bool ref,
              instance: atype Option ref, 
-             instantiated: bool ref }
+             instantiated: bool ref,
+	     color: shade ref }
 
   withtype atype = (utype * attributes) UF
   
@@ -41,7 +45,8 @@ structure KernelTypes (*: KERNELTYPES *) =
             neg = ref false, 
             interpreted = ref false, 
             instance = ref None,
-            instantiated = ref false }
+            instantiated = ref false,
+	    color = ref WHITE }
 
   (* selection functions *)
   fun utype (aty: atype) = #1 (!!aty)
@@ -58,6 +63,17 @@ structure KernelTypes (*: KERNELTYPES *) =
 
   (* make a new simple type *)  
   fun make_type stype = make (SIMPLE stype, make_attrib())
+
+  fun bool() = make_type (BOOL, [])
+  fun char() = make_type (CHAR, [])
+  fun string() = make_type (STRING, [])
+  fun symbol() = make_type (SYMBOL, [])
+  fun number() = make_type (NUMBER, [])
+  fun vector t = make_type (VECTOR, [t])
+  fun pair(t1,t2) = make_type (PAIR, [t1,t2])
+  fun unit() = make_type (NIL, [])
+  fun unspec() = make_type (UNSPEC, [])
+  fun func(t1,t2) = make_type (FUNC, [t1,t2])
 
   fun error s = raise IllegalInput s
 
@@ -87,20 +103,6 @@ structure KernelTypes (*: KERNELTYPES *) =
 
   infix ::= 
 
-  (* asymmetric union: contents is the contents of the first element *)
-  fun union1 (t1, t2) =
-      let val c1 = !!t1
-      in (union (t1, t2);
-          t1 ::= c1)
-      end
-
-  (* asymmetric union: contents is the contents of the second element *)
-  fun union2 (t1, t2) =
-      let val c2 = !!t2
-      in (union (t1, t2);
-          t2 ::= c2)
-      end
-  
   fun equiv (t1, t2): unit =
       let val t1' = ecr t1
           val t2' = ecr t2
@@ -135,8 +137,8 @@ structure KernelTypes (*: KERNELTYPES *) =
              (SIMPLE (_, tlist), SIMPLE (_, tlist')) =>
 				(union (t1, t2);
                  apply aliasvar (zip (tlist, tlist')))
-           | (TVAR _, SIMPLE _) => union2 (t1, t2)
-           | (SIMPLE _, TVAR _) => union1 (t1, t2)
+           | (TVAR _, SIMPLE _) => link (t1, t2)
+           | (SIMPLE _, TVAR _) => link (t2, t1)
            | (TVAR _, TVAR _) => union (t1, t2)
            | (_,_) => error ("aliassimple", "Illegal type aliasing attempted")
   and aliasvar (t1, t2): unit =
@@ -158,8 +160,8 @@ structure KernelTypes (*: KERNELTYPES *) =
                     (union (t1, t2); apply unify (zip (tlist, tlist')))
                  else error ("Type constructor clash in unify", "")
             | (TVAR _, TVAR _) => union (t1, t2)
-            | (TVAR _, _) => union2 (t1, t2)
-            | (_, TVAR _) => union1 (t1, t2)
+            | (TVAR _, _) => link (t1, t2)
+            | (_, TVAR _) => link (t2, t1)
             | (_, _) => error ("Dyn and simple types cannot be unified", "")
 
   fun pred_succ (l,h) =
@@ -222,7 +224,7 @@ structure KernelTypes (*: KERNELTYPES *) =
        let val tequiv = ecr t
        in
        (case utype tequiv of
-         TVAR _ => unify (t, tequiv)
+         TVAR _ => link (t, tequiv)
        | SIMPLE _ => let val atts = attributes t
                      in if !(#pos atts) andalso !(#neg atts)
                            then apply (fn tpr => 
@@ -231,16 +233,16 @@ structure KernelTypes (*: KERNELTYPES *) =
                                            let val attstpr = attributes tpr
                                            in if !(#pos attstpr) andalso
                                                  !(#neg attstpr) 
-                                              then unify (t, tpr)
+                                              then union (t, tpr)
                                               else ()
                                            end
                                         | SIMPLE _ => ()
                                         | _ => error ("interpret", 
                                                "Must not be a DYN type"))
                                       (!(#preds atts))
-                            else unify (t, tequiv)
+                            else link (t, tequiv)
                      end
-       | DYN f => unify (t, tequiv))
+       | DYN f => link (t, tequiv))
        end)
     end
 

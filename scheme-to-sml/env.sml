@@ -1,7 +1,7 @@
 structure Environment =
   struct
 
-  type 'a Env = (string * 'a) list
+  type 'a env = (string * 'a) list
 
   val empty_env = []
 

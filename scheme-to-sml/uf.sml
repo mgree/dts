@@ -1,6 +1,6 @@
-(*$UnionFind: UNIONFIND *)
+(*$UnionFind: UNIONFIND *)
 
-structure UnionFind: UNIONFIND =
+structure UnionFind (* : UNIONFIND *) =
 
 (* UNIONFIND DATA STRUCTURE WITH PATH COMPRESSION AND RANKED UNION
 
@@ -42,6 +42,14 @@ struct
       in case !p' of
            ECR (_, r) => (p' := ECR (x, r))
          | _ => raise UnionFind "::="
+      end
+
+  fun link (p, q) =
+      let val p' = find p
+          val q' = find q
+      in if p' = q'
+	    then ()
+         else p' := PTR q
       end
 
   fun union (p, q) = 
