@@ -1,6 +1,8 @@
-structure Symbol: SYMBOL =
-  struct
+(* structure Symbol: SYMBOL =
+  struct *)
 
   fun symbol2string (s: symbol) = s
-  fun string2symbol (s: string) = 
+  fun string2symbol (s: string) = s
+(*
   end 
+*)

@@ -1,39 +1,41 @@
-structure Types =
-  struct
+(* structure Types =
+  struct *)
 
   (* TYPES *)
 
   datatype 'a Option =
       Some of 'a
-    | No
-  datatype datum 
-      BOOLDAT of boo
+    | None
+
+  datatype datum =
+      BOOLDAT of bool |
       CHARDAT of string |
       STRIDAT of string |
-      SYMBDAT of strin
-      NUMBDAT of string 
+      SYMBDAT of string |
+      NUMBDAT of string |
       VECTDAT of datum list |
       PAIRDAT of datum * datum |   
       NILDAT  
-  datatype expression 
+
+  datatype expression =
       LITERAL of datum |
-      VARIABLE of string 
+      VARIABLE of string |
       CALL of expression * expression list |
       LAMBDA of formals * (definition list * expression list) |
       IF of expression * expression * expression |  
       ASSIGN of (string * expression) |
       COND of cond_clause_body |
       CASE of expression * case_clause_body |
-      AND of expression list |	
-      OR of expression list 
+      AND of expression list |  
+      OR of expression list |
       LET of (string * expression) list * (definition list * expression list) |
-      NAMEDLET of string * (string * expression) list 
-  		(definition list * expression list) 
+      NAMEDLET of string * (string * expression) list * 
+                (definition list * expression list) |
       LETS of (string * expression) list * (definition list * expression list) |
       LETREC of (string * expression) list * (definition list * expression list) |
       BEGIN of expression list |
       DO of (string * expression * expression) list * (expression * 
-  	  	expression list) * expression list |
+                expression list) * expression list |
       DELAY of expression |
       QUASIQUOTE of template |
       UNDEFEXP
@@ -46,64 +48,68 @@ structure Types =
       TEST of expression |
       TESTREC of expression * expression
   and case_clause_body = 
-      CASECLAUSE of (datum list * expression list) * case_clause_body 
-      NULLCASE 
-      CASEDEFAULT of expression lis
+      CASECLAUSE of (datum list * expression list) * case_clause_body |
+      NULLCASE |
+      CASEDEFAULT of expression list 
   and definition =
-      VARDEF of string * expression 
+      VARDEF of string * expression |
       FUNDEF of string * formals * (definition list * expression list) |
       BEGINDEF of definition list
-  and template 
+  and template =
       SIMPLETEMP of datum |
-      PAIRTEMP of template_or_splice * template 
+      PAIRTEMP of template_or_splice * template |
       VECTTEMP of template_or_splice list |
       UNQUOTE of expression 
   and template_or_splice =
       TEMPLATE of template |
-      SPLICE of expressio
+      SPLICE of expression
   and formals =
       VARPAR of string |
       PAIRPAR of string * formals |
       NULLPAR
       
-  datatype command 
-      EXP of expression 
+  datatype command =
+      EXP of expression |
       DEF of definition
 
   datatype mstring = 
     FIXED of string |
-    MUTABLE of string ref lis
+    MUTABLE of string ref list
+
   datatype dynamic =
       BOOL of boolean | 
       CHAR of char |
       STRING of mstring |
       SYMBOL of symbol |
       NUMBER of number |
-      VECTOR of vector 
-      PAIR of pair 
+      VECTOR of vector |
+      PAIR of pair |
       PROCEDURE of procedure |
       LIST of plist |
       INPUT_PORT of input_port |
       OUTPUT_PORT of output_port |
-      UNSPECIFIE
-  withtype object = dynamic re
+      UNSPECIFIED
+  withtype object = dynamic ref
   and boolean = bool
   and char = string
-  and symbol = strin
+  and symbol = string  
   and number = int
-  and vector = object Vector.vector
-  and pair = object * object
-  and procedure = object list -> object
-  and plist = object list
-  and input_port = instrea
-  and output_port = outstream
+  and vector = dynamic ref Vector.vector
+  and pair = dynamic ref * dynamic ref
+  and procedure = dynamic ref list -> dynamic ref
+  and plist = dynamic ref list
+  and input_port = BasicIO.instream
+  and output_port = BasicIO.outstream
 
   type alist = (object * object) list
   and complex = int
   and real = int
-  and rational = in
+  and rational = int
   and integer = int
   and natural = int
   and radix = int
-  and unspec = un
+  and unspec = unit
+(*
   end
+
+*)

@@ -1,10 +1,13 @@
-structure Error: ERROR 
-  struc
-  exception Unimplemented of stri
-  and Impossible of strin
+(* structure Error: ERROR =
+  struct *)
+
+  exception Unimplemented of string
+  and Impossible of string
   and ParseError of string * datum
-  and TypeError of string * objec
-  and InputError of string * objec
+  and TypeError of string * object
+  and InputError of string * object
   and IOError of string * string
-  and EndOfFi
-  en
+  and EndOfFile
+(*
+  end
+*)
