@@ -48,6 +48,11 @@ structure SchemeGeneral (*: SCHEMEGENERAL *) =
   fun forall f nil = true
         | forall f (a::l) = f a andalso forall f l
         
+  fun filter f l =
+      case l of
+        [] => []
+      | x::xs => if (f x) then x::(filter f xs) else filter f xs
+
   datatype 'a applist =   LIST of 'a list 
                         | APPEND of 'a applist list
 
@@ -105,6 +110,7 @@ structure Environment =
   fun lookup s [] = raise Lookup
     | lookup s ((s',v)::r) = 
          if s = s' then v else lookup s r
+
 
   fun iskey s e = (true before lookup s e) handle Lookup => false
   

@@ -9,10 +9,10 @@ structure Type =
   (* TYPE TAGS *)
 
   datatype type_tag = FUNC | BOOL | PAIR | CHAR | SYMBOL |
-                      STRING | NUMBER | VECTOR | 
+                      STRING | NUMBER | VECTOR | NIL |
                       LST | UNSPEC
 
-  val type_tags = [FUNC, BOOL, PAIR, CHAR, SYMBOL, 
+  val type_tags = [FUNC, BOOL, PAIR, CHAR, SYMBOL, NIL,
         	       STRING, NUMBER, VECTOR, LST, UNSPEC]
 		
   datatype shade = WHITE | GREY | BLACK
@@ -20,7 +20,12 @@ structure Type =
   datatype PPtype = SIM of type_tag * PPtype list |
                     DYNAMIC of PPtype list |
                     TYVAR of int  |
-                    MORE
+                    RECNAME of string |
+                    LETREC of (string * PPtype)list * PPtype |
+                    MORE |
+                    PPTSCHEME of (PPtype * PPtype)list * PPtype |
+                    PPTYPE of PPtype
+
 
   (* DYNAMIC TYPES *)
 
@@ -45,7 +50,8 @@ structure Type =
              collected: bool ref,
              instance: atype Option ref, 
              color: shade ref,
-             name: string Option ref }
+             name: string Option ref,
+             isnamed : bool ref }
 
   withtype atype = (utype * attributes) uref
 
@@ -65,7 +71,8 @@ structure Type =
             collected = ref false,
             instance = ref None,
             color = ref WHITE,
-            name = ref None }
+            name = ref None,
+            isnamed = ref false }
 
   (* selection functions *)
 
@@ -98,7 +105,8 @@ structure Type =
   fun unspec() = make_type (UNSPEC, [])
   fun func(t1,t2) = make_type (FUNC, [t1,t2])
   fun listtype t = make_type (LST, [t])
-  fun unit() = listtype (new_typevar())
+  fun (* unit() = listtype (new_typevar()) *)
+      unit() = make_type (NIL, []) 
 
   (* make a new dynamic type *)
 
@@ -157,6 +165,235 @@ structure Type =
       | DYN f             => DYNAMIC (map (show (level-1)) (summands f))
     in show (!SML_NJ.Print.printDepth) t
     end
+
+
+
+
+
+
+
+
+
+
+
+(*-------------- RECURSIVE TYPES ---------------------*)
+
+
+
+
+local open SchemeGeneral
+
+  val Env = ref ([] : (string * PPtype)list)
+  fun resetenv() = Env := ([] : (string * PPtype)list)
+in
+
+  exception Getname;
+  fun getname name =
+      case ! name of
+        None => raise Getname
+      | Some N => N
+
+  fun unfold t =
+      let val ut = utype t 
+          val name = get #name t
+          val isnamed = get #isnamed t
+      in
+          if !isnamed then RECNAME (getname name) 
+          else
+            (isnamed := true; 
+             (case ut of
+               SIMPLE(tt, tlist) => SIM(tt, map unfold tlist)
+             | TVAR i => TYVAR i
+             | DYN f => DYNAMIC (map unfold (summands f))) before
+             isnamed := false (* reset the isnamed field *))
+      end
+               
+                          
+
+  fun named_type t =
+      let val ut = utype t 
+          val name = get #name t
+          fun isin_env(s,E) =
+              case E of
+                [] => false
+              | (s',v)::E' => if s = s' then true else isin_env(s, E')
+
+          fun extenv(s,v) = 
+              let val E = !Env
+              in
+                  if isin_env(s,E) then () else Env := (s,v)::E
+              end
+      in
+          case !name of
+                      
+            Some N => (extenv(N, unfold t);(* update recursion environment *)  
+                       RECNAME N) 
+          | None => (case ut of
+                       SIMPLE(tt, tlist) => SIM(tt, map named_type tlist)
+                     | TVAR i => TYVAR i
+                     | DYN f => DYNAMIC (map named_type (summands f)))
+      end
+
+  fun ty2PPty t = 
+      (resetenv(); 
+       let val nty = named_type t
+       in
+           LETREC(!Env, nty)
+       end)
+
+
+
+
+(* --------- GENERATION OF DATATYPES ----------------*)
+
+
+
+(* Probably out:
+
+    fun freevars1 ppt = 
+        case ppt of
+          SIM(tt, lst) => fold (fn (x, y) => x @ y) lst []
+        | DYNAMIC lst => fold (fn (x, y) => x @ y) lst []
+        | TYVAR i => [TYVAR i]
+        | _ => []
+
+   fun lst2set l =
+       case l of
+         [] => []
+       | x::xs => if List.member x xs then lst2set xs
+                  else  x::(lst2set xs)
+
+   fun freevars ppt = let val fv = freevars1 ppt
+                      in 
+                          lst2set fv
+                      end
+*)
+
+
+  
+
+  local val c = ref 0
+  in
+        fun ntv() = TYVAR (!c) before c := !c + 1 
+  end
+ 
+  fun freshsubstdyn() = [ntv(), ntv(), ntv(), ntv()]
+
+
+  fun insert(l, substdyn as [t1, t2, t3, t4]) =
+      case l of
+        [] => substdyn
+      | (x as (SIM(PAIR, [fst, snd])))::xs =>
+               insert(xs, [fst, snd, t3, t4])
+      | (x as (SIM(FUNC, [dom, ran])))::xs =>
+               insert(xs, [t1, t2, dom, ran]) 
+      | x::xs => insert(xs, substdyn)
+       
+        
+  fun dyn2substdyn l =
+      insert(l, freshsubstdyn())
+
+ 
+  exception PPerror;
+  
+  fun PP2str ppt = 
+      let fun paren x = "("^x^")"          
+          fun sqparen x = "["^x^"]"
+          fun strlist2sum l =
+              case l of
+                [] => ""
+              | [x] => x
+              | x::xs => x^"+"^(strlist2sum xs)
+      in
+        case ppt of
+          SIM(FUNC, [dom, ran]) => paren((PP2str dom)^"->"^(PP2str ran))
+        | SIM(PAIR, [fst, snd]) => paren((PP2str fst)^"*"^(PP2str snd))
+        | SIM(BOOL, []) => "bool"
+        | SIM(CHAR, []) => "char"
+        | SIM(SYMBOL, []) => "symbol"
+        | SIM(STRING, []) => "string"
+        | SIM(NUMBER, []) => "number"
+        | SIM(NIL, []) => "nil"
+        | SIM(LST, _) => (output(std_out, "PPerror: LST\n"); raise PPerror)
+        | SIM(UNSPEC, _) => 
+                      (output(std_out, "PPerror: UNSPEC\n"); raise PPerror)
+        | TYVAR i => "'a"^(makestring i)
+        | DYNAMIC l => (* PPdyn2str l *)
+                       paren(strlist2sum (map PP2str  l)) 
+        | RECNAME name => name
+        | MORE => "#"
+        | _ => raise PPerror 
+      end
+                  
+  and PPdyn2str l =
+      let val [t1, t2, t3, t4] = dyn2substdyn l
+          val t1str = PP2str t1
+          val t2str = PP2str t2
+          val t3str = PP2str t3
+          val t4str = PP2str t4
+      in
+          "("^t1str^","^t2str^","^t3str^","^t4str^")"^"dyn"  
+      end
+
+  
+   
+
+  fun env2str E =
+      case E of
+        [] => ""
+      | [(s,v)] => s^" = "^(PP2str v) 
+      | (s,v)::E' => s^" = "^(PP2str v)^"\n"^(env2str E')
+
+
+
+
+
+
+
+
+(*  
+   fun recbind2dataty (recvar, recty) =
+       let val fv = freevars recty
+       
+fun env2MLstr E = 
+*)
+
+
+  fun subst(substty, name) ppty =
+      case ppty of
+        RECNAME name' => if name = name' then substty else RECNAME name    
+      | SIM(tt, l) => SIM(tt, map (subst(substty, name)) l)
+      | DYNAMIC l => DYNAMIC (map (subst(substty, name)) l)
+      | _ => ppty
+
+ 
+
+  fun unfoldPPty(recname, ppty) =
+      subst(ppty, recname) ppty
+
+
+  fun unfoldenv E =
+      case E of
+        [] => []
+      | (name, ppty)::E' => (name, (unfoldPPty(name, ppty)))::(unfoldenv E')
+
+  fun ty2str t = 
+      let val LETREC(E, ppt) = ty2PPty t
+          (* val E' = unfoldenv E *)
+      in
+           let val ppstr = PP2str ppt
+               val envstr =  env2str E
+           in
+               (if envstr <> "" then "\nletrec\n"^envstr^"\nin\n"
+               else "")^ppstr
+           end
+      end
+       
+end (* local val Env ... *)
+
+
+           
+
   end
 
 end;
@@ -177,6 +414,7 @@ structure Coercion =
   datatype coercion =
      CVAR of int * atype * atype
    | IDC 
+   | ERR
    | TAG of type_tag
    | CHECK of type_tag
    | MAP of type_tag * coercion list
@@ -225,16 +463,16 @@ structure Constraint =
                   in (ntvar, APPEND [leaf topconstraint, Cd, Cr])
                   end
           | SIMPLE (LST, [at]) =>
-          		  let val (nt, C) = decompose b at
-          		      val nstype = listtype nt
-          		      val ntvar = new_typevar()
-          		      val ty = new_typevar()
-          		      val topconstraints =
-          		      	  if b then [(nstype, ntvar), (ty, ntvar)]
-          		      	       else [(ntvar, nstype), (ntvar, ty)]
-          		  in (get #equivptr nstype := Some (pair(nt, ty));
-          		      (ntvar, APPEND [LIST topconstraints, C]))
-          		  end
+		  let val (nt, C) = decompose b at
+       		      val nstype = listtype nt
+       		      val ntvar = new_typevar()
+		      val eqrtype = pair (nt,ntvar)
+       		      val topconstraint =
+       		      	  if b then (nstype, ntvar)
+       		      	       else (ntvar, nstype)
+       		  in (get #equivptr nstype := Some eqrtype;
+		     (ntvar, APPEND [leaf topconstraint, C]))
+       		  end 
           | SIMPLE (ttag, atl) =>
                   let val tCs = map (decompose b) atl
                       val nstype = make_type (ttag, map #1 tCs)

@@ -27,6 +27,7 @@ in
 val _ = set_sources N (* set source types for all types *)
 val _ = set_sinks N (* set sink types for all types *)
 val _ = set_types N (* set types according to sources and sinks *)
+val _ = find_list_types N  (* find all list types *)
 end
 val final = display_def ad
 val constraints_final = show_constraints C

@@ -3,15 +3,24 @@
 
   local open Exp Coercion
   fun nothing _ = ()
+  fun empty _ = "@"
   val new_atts = INIT { parameter = nothing,
                        variable = nothing,
                        exp = new_coercion_sig }
+
+  val empty_atts = INIT{ parameter = empty,
+                         variable = empty,
+                         exp = fn () => "@" }
+
                                                  
   in
   val (parse_exp, parse_def, parse_program) = read new_atts;
+  
+  val (empty_parse_exp, empty_parse_def, empty_parse_program) = 
+      read empty_atts;
   end;
 
-
+  
 
 
   (* 2nd stage: resolve variable occurrences by annotating them
@@ -498,7 +507,7 @@ fun interpret_type t =
     let val neg = !(get #neg t)
         val pos = !(get #pos t)
         val sources = !(get #sources t)
-        val csources = contract sources
+	val csources = contract sources
         val sinks = !(get #sinks t)
         val csinks = contract sinks
         val interpreted = get #interpreted t
@@ -550,8 +559,9 @@ fun interpret_type t =
                        | _ => link(t, make_dyn_type (values sinks)))
                  | (false, false) =>
                       let val ienv = and_combine (sources, sinks)
-	                  in case keys ienv of
-	                       nil => link(t, unspec())
+	                  val cienv = contract ienv
+		      in case keys cienv of
+	                           nil => link(t, unspec())
 		                 | [tt] => link(t, lookup tt ienv)
 		                 | _ => link(t, make_dyn_type (values ienv))
   	                  end))
@@ -582,7 +592,30 @@ fun mark_rec_type t =
 	  			end
 	  | BLACK => ()
     end
-     
+
+fun makelst t = make_type (LST, [t])
+fun find_list_type t =
+    let val color = get #color t 
+    in case !color of 
+    	WHITE => (color := GREY;
+				  (case utype t of
+				  	TVAR _ => ()
+				  | SIMPLE (PAIR, [t1,t2]) =>
+					if equal(t,t2)
+                                        then (debug("find_list_type",
+						    "list type found");
+					      link(t, makelst t1);
+					      find_list_type t1)
+				        else (find_list_type t1;
+					      find_list_type t2)
+				  | SIMPLE (_, tlist) => 
+				  	   apply find_list_type tlist
+				  | DYN f => 
+				       apply find_list_type (summands f));
+				  color := BLACK)
+	  | GREY => ()
+	  | BLACK => ()
+    end
 in
 fun set_sources N =
     let val sources = find_sources (aflatten [N])
@@ -596,6 +629,9 @@ val set_types = foreach interpret_type
 fun mark_rec_types N = 
     (foreach (fn t => get #color t := WHITE) N;
     foreach mark_rec_type N)
+fun find_list_types N =
+    (foreach (fn t => get #color t := WHITE) N;
+    foreach find_list_type N)
 end;
 
 
@@ -637,16 +673,25 @@ val topenv = list2env
                   val nt2 = new_typevar()
               in close ([], funcl ([pair(nt1,nt2)], nt2))
               end),
-      ("null?", let val nt = new_typevar()
-      		    in close ([], funcl ([listtype nt], bool()))
-      		    end)]
+      ("null?", let val nt1 = new_typevar()
+                    val nt2 = new_typevar()
+      		    in close ([], funcl (
+                             [make_dyn_type [unit(),pair(nt1,nt2) ]], bool()))
+      		    end),
+      ("inc", let val nt1 = new_typevar()
+                  val nt2 = new_typevar()
+              in close ([], funcl ([number()], number()))
+              end),
+      ("equal?", let val nt = new_typevar()
+                 in close ([], funcl ([nt, nt], bool()))
+                 end)]
 end
 
 
-(* Old type for null?:
-				let val nt1 = new_typevar()
-                    val nt2 = new_typevar()
-                in close ([], func(tlist [make_dyn_type [unit(), 
-                			   pair(nt1,nt2)]], bool()))
-                end *)
+(* Alternative type for null?
 
+let val nt = new_typevar()
+                in close ([], funcl ([listtype nt], bool()))
+                end
+
+*)
