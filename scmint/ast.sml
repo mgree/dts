@@ -29,7 +29,6 @@ type body
 type case_clause
 type binding_spec
 type iteration_spec
-
     
 datatype expression =
     LITERAL of dynamic |
@@ -47,8 +46,7 @@ datatype expression =
     LETS of binding_spec list * body |
     LETREC of binding_spec list * body |
     BEGIN of sequence |
-    DO of iteration_spec list * expression * sequence * 
-    expression list |
+    DO of iteration_spec list * expression * sequence * expression list |
     DELAY of expression |
     QUASIQUOTE of template 
 and cond_clause_body =
@@ -114,10 +112,6 @@ structure SchemeAst: SCHEMEAST =
              SchemeBool SchemeSymbol SchemeString SchemeList 
              SchemePair SchemeVector 
   in
-
-
-
-
 
   type 'a Option = 'a Option
   type variable = string

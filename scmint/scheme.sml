@@ -24,4 +24,5 @@ use "environm.sml";
 use "ast.sml";
 use "eval.sml";
 use "annast.sml";
+exportML "DTScheme";
 

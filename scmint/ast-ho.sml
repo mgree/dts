@@ -1,4 +1,4 @@
-(*$ SCHEMEAST *)
+(*$SCHEMEAST *)
 
 signature SCHEMEAST =
 sig
@@ -20,6 +20,8 @@ Scheme abstract syntax specification
 
 type 'a Option
 type dynamic
+type number
+type bool
 
 type variable
 type sequence 
@@ -44,8 +46,7 @@ datatype expression =
     LETS of binding_spec list * body |
     LETREC of binding_spec list * body |
     BEGIN of sequence |
-    DO of iteration_spec list * expression * sequence * 
-    expression list |
+    DO of iteration_spec list * expression * sequence * expression list |
     DELAY of expression |
     QUASIQUOTE of template 
 and cond_clause_body =
@@ -82,38 +83,41 @@ datatype command_or_definition =
     COMMAND of expression |
     DEFINITION of definition
 
-type datum
 
-type ('a,'b,'c,'d,'e,'f,'g,'h,'i) fcn_record
+
+datatype datum =
+      BOOLDAT of bool |
+      CHARDAT of string |
+      STRIDAT of string |
+      SYMBDAT of string |
+      NUMBDAT of number |
+      VECTDAT of datum list |
+      LISTDAT of datum list |
+      ILISTDAT of datum list * datum
+
 
 val read_datum: instream -> datum
 val dat2command_or_definition: datum -> command_or_definition
-val Pdat2command_or_definition :     ('a,'b,'c,'d,'e,'f,'g,'h,'i) fcn_record -> datum -> 'd
-
-
-
     
 end
 
 
-(*$ SchemeAst: SchemeBool SchemeChar SchemeNumber SchemeString
+(*$SchemeAst:  SCHEMEAST SchemeBool SchemeChar SchemeNumber SchemeString
                SchemeSymbol SchemeVector SchemePair SchemeList
 	       SchemeProcedure SchemeGeneral SchemeDynamic *)
 
-structure SchemeAst  : SCHEMEAST  =
+structure SchemeAst: SCHEMEAST =
   struct
   local open SchemeGeneral SchemeChar SchemeNumber SchemeDynamic 
              SchemeBool SchemeSymbol SchemeString SchemeList 
-             SchemePair SchemeVector SchemeGeneral 
+             SchemePair SchemeVector 
   in
-
-
-
-
 
   type 'a Option = 'a Option
   type variable = string
   type dynamic = dynamic
+  type number = number
+  type bool = bool
       
   datatype expression =
       LITERAL of dynamic |
@@ -806,478 +810,6 @@ exception ParseError of string
   fun dat2command_or_definition d = Tcommand_or_definition d
       
  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-(*----------------------------------------------------------------------------------------------*)
-(*------------------- Parametrized version -----------------------------------------------------*)
-(*----------------------------------------------------------------------------------------------*)
-
-type ('a,'b,'c,'d,'e,'f,'g,'h,'i) fcn_record =
-                                     {and_fcn:'a list -> 'a,
-                                      assign_fcn:'a * 'a -> 'a,
-                                      begin_fcn:'a list * 'a -> 'a,
-                                      begindef_fcn:'b list -> 'b,
-                                      call_fcn:'a * 'a list -> 'a,
-                                      case_fcn:'a * 'c -> 'a,
-                                      caseclause_fcn:('a list * ('a list * 'a))
-                                                     * 'c
-                                                     -> 'c,
-                                      casedefault_fcn:'a list * 'a -> 'c,
-                                      command_fcn:'a -> 'd, cond_fcn:'e -> 'a,
-                                      condclause_fcn:'f * 'e -> 'e,
-                                      conddefault_fcn:'a list * 'a -> 'e,
-                                      datum_fcn:datum -> 'a,
-                                      definition_fcn:'b -> 'd,
-                                      delay_fcn:'a -> 'a,
-                                      do_fcn:('a * 'a * 'a Option) list * 'a
-                                             * ('a list * 'a) * 'a list
-                                             -> 'a,
-                                      fundef_fcn:'a * 'g
-                                                 * ('b list * ('a list * 'a))
-                                                 -> 'b,
-                                      if_fcn:'a * 'a * 'a Option -> 'a,
-                                      ilisttemp_fcn:'h list * 'i -> 'i,
-                                      lambda_fcn:'g
-                                                 * ('b list * ('a list * 'a))
-                                                 -> 'a,
-                                      let_fcn:('a * 'a) list
-                                              * ('b list * ('a list * 'a))
-                                              -> 'a,
-                                      letrec_fcn:('a * 'a) list
-                                                 * ('b list * ('a list * 'a))
-                                                 -> 'a,
-                                      lets_fcn:('a * 'a) list
-                                               * ('b list * ('a list * 'a))
-                                               -> 'a,
-                                      listtemp_fcn:'h list -> 'i,
-                                      namedlet_fcn:'a * ('a * 'a) list
-                                                   * ('b list * ('a list * 'a))
-                                                   -> 'a, nullcase_fcn:'c,
-                                      nullcond_fcn:'e, nullpar_fcn:'g,
-                                      or_fcn:'a list -> 'a,
-                                      pairpar_fcn:'a * 'g -> 'g,
-                                      quasiquote_fcn:'i -> 'a,
-                                      simpletemp_fcn:datum -> 'i,
-                                      template_fcn:'i -> 'h, test_fcn:'a -> 'f,
-                                      testrec_fcn:'a * 'a -> 'f,
-                                      testseq_fcn:'a * ('a list * 'a) -> 'f,
-                                      unqspl_fcn:'a -> 'h,
-                                      unquote_fcn:'a -> 'i,
-                                      vardef_fcn:'a * 'a -> 'b,
-                                      variable_fcn:string -> 'a,
-                                      varpar_fcn:'a -> 'g,
-                                      vectemp_fcn:'h list -> 'i}
-           
-
-
-
-
-
-
-
-                      (* take parameter list to PAIRPAR-list *)
-  fun Pparlist2pairpar (F : ('a,'b,'c,'d,'e,'f,'g,'h,'i) fcn_record) ([], null) = null
-  |   Pparlist2pairpar F ((x::tl), null) = 
-                      (#pairpar_fcn F) (x, Pparlist2pairpar F (tl, null))
-
-                        (* take cond_clause list list to CONDCLAUSE-list *)
-  fun Pcondlist2condcons (F : ('a,'b,'c,'d,'e,'f,'g,'h,'i) fcn_record) ([], null) = null
-  |   Pcondlist2condcons F ((x::tl), null) = 
-                        (#condclause_fcn F) (x, Pcondlist2condcons F (tl, null))
-
-                        (* take cond_clause list list to CONDCLAUSE-list *)
-  fun Pcaselist2casecons (F : ('a,'b,'c,'d,'e,'f,'g,'h,'i) fcn_record) ([], null) = null
-  |   Pcaselist2casecons F ((x::tl), null) = 
-                        (#caseclause_fcn F) (x, Pcaselist2casecons F (tl,null))
-
-
-
-
-
-
-
-  (* TRANSLATION FUNCTIONS *)
-
-  fun PTvariable (F : ('a,'b,'c,'d,'e,'f,'g,'h,'i) fcn_record) (s as (SYMBDAT symbol)) = 
-                if not (SyntacticKeyword symbol)
-                then (#variable_fcn F) symbol
-                else sig_err("Syntactic keyword used as variable",s)
-
-  |   PTvariable F s = sig_err("Expected a variable",s)
-	 
-  fun PTformals F parlist par = Pparlist2pairpar F ((map (PTvariable F) parlist), par)
-  
-  fun PTquasiquotation F (LISTDAT([SYMBDAT quasiquote, template])) =
-                      (#quasiquote_fcn F) (PTtemplate F template 1)
-
-  |   PTquasiquotation F q = sig_err("Expected quasiquotation",q)
-
-                (* <simple datum> *)
-  and PTtemplate F (BOOLDAT b)D = (#simpletemp_fcn F) (BOOLDAT b)
-  |   PTtemplate F (CHARDAT c)D = (#simpletemp_fcn F) (CHARDAT c)
-  |   PTtemplate F (NUMBDAT n)D = (#simpletemp_fcn F) (NUMBDAT n)
-  |   PTtemplate F (STRIDAT s)D = (#simpletemp_fcn F) (STRIDAT s)
-  |   PTtemplate F (SYMBDAT s)D = (#simpletemp_fcn F) (SYMBDAT s)
-
-                (* <vector template> *)
-  |   PTtemplate F (VECTDAT(template_or_splice_lst))D =
-                 (#vectemp_fcn F) (map (fn t => PTtemplate_or_splice F t D)
-                                      template_or_splice_lst)
-    
-                (* <unquotation D> *)
-  |   PTtemplate F (LISTDAT([SYMBDAT "unquote",template]))D =
-                if D=1 then
-                   (#unquote_fcn F) (PTexp F template)
-                else
-                   (#listtemp_fcn F) ([(#template_fcn F) ((#simpletemp_fcn F)(SYMBDAT  "unquote")),
-                   (#template_fcn F) (PTtemplate F template (D-1))])
-
-                (* <list template> *)
-                (* <quasiquotation D+1> *)
-  |   PTtemplate F (LISTDAT([SYMBDAT "quasiquote", template]))D =
-                 (#listtemp_fcn F) ([(#template_fcn F) ((#simpletemp_fcn F)(SYMBDAT "quasiquote")),
-                 (#template_fcn F) (PTtemplate F template (D+1))])
-
-                (* (quote <template D>) *)
-  |   PTtemplate F (LISTDAT([SYMBDAT "quote",template]))D =
-                 (#listtemp_fcn F) ([(#template_fcn F)((#simpletemp_fcn F)(SYMBDAT "quote")),
-                 (#template_fcn F) (PTtemplate F template D)])
- 
-                (* (<template or splice D>* ) *)
-  |   PTtemplate F (LISTDAT(template_or_splice_lst))D =
-                 (#listtemp_fcn F) (map (fn t => PTtemplate_or_splice F t D)
-                                      template_or_splice_lst)
-
-                (* (<template or splice D>+ . <template D> ) *)
-  |   PTtemplate F (ILISTDAT(template_or_splice_lst, template)) D =
-                (#ilisttemp_fcn F) (map (fn t => PTtemplate_or_splice F t D)
-                               template_or_splice_lst , PTtemplate F template D)
-
-  and PTtemplate_or_splice F (LISTDAT([SYMBDAT "unquote-splicing", template]))D =
-                          if D=1 then
-                             (#unqspl_fcn F) (PTexp F template)
-                           else
-                              (#template_fcn F) ((#listtemp_fcn F) ([(#template_fcn F)
-                              ((#simpletemp_fcn F) (SYMBDAT "unquote-splicing")),
-                              (#template_fcn F) (PTtemplate F template (D-1))]))
-
-  |   PTtemplate_or_splice F (template)D = 
-                           (#template_fcn F) (PTtemplate F template D)
-
-  and PTdefinition F (LISTDAT([SYMBDAT "define", 
-                          variable as (SYMBDAT _), 
-                          exp])) =
-                   let val variable' = PTvariable F variable
-                       val exp'      = PTexp F exp
-                   in
-                       (#vardef_fcn F)(variable',exp')
-                   end
-
-  |   PTdefinition F (def as (LISTDAT((SYMBDAT "define")::
-                  (ILISTDAT(variable1::formals, variable2))::
-                  body))) =
-                  let val variable'   = PTvariable F variable1
-                      val variable''  = PTvariable F variable2
-                      val formals'    = PTformals F formals ((#varpar_fcn F) variable'')
-                      val body'       = PTbody F body
-                  in
-                      ((#fundef_fcn F) (variable',formals',body'))
-                       handle ParseError mes => sig_err(mes,def)
-                  end
-                        
-  |   PTdefinition F (def as (LISTDAT((SYMBDAT "define")::
-                          (LISTDAT(variable::formals))::
-                          body))) =
-	           let val variable' = PTvariable F variable
-                       val formals'  = PTformals F formals (#nullpar_fcn F)
-                       val body'     = PTbody F body
-                   in
-                       ((#fundef_fcn F) (variable',formals',body'))
-                        handle ParseError mes => sig_err(mes,def)
-                   end
-
-  |   PTdefinition F (LISTDAT((SYMBDAT "begin")::deflist)) =
-                   let val deflist' = map (PTdefinition F) deflist
-                   in
-                       (#begindef_fcn F) deflist'
-                   end
-
-  |   PTdefinition F d = sig_err("Expected definition",d)
-
-           (* Note that Tbody is supposed to be 
-              called with a list argument.*)
-           (* singleton case *)
-  and PTbody F b = 
-      case b of
-           [exp]    => ([],([],PTexp F exp))
-      |    (hd::tl) =>  if (isdefinition hd) then
-                            let val (dlist,sequence) = PTbody F tl
-                                val d                = PTdefinition F hd
-                            in
-                                (d::dlist,sequence)
-                            end
-                         else
-                            let val (dlist,(explist,exp)) = PTbody F tl
-                                val exp'                  = PTexp F hd
-                            in
-                                (dlist,(exp'::explist,exp))
-                            end     
-      |   _         => raise ParseError "Illegal empty body"
-   
-                   (* (<test> => <recipient>) *)
-  and PTcond_clause F (LISTDAT([exp1,SYMBDAT "=>",exp2])) =
-                   (#testrec_fcn F) (PTexp F exp1, PTexp F exp2)
-
-                   (* (<test>) *)
-  |   PTcond_clause F (LISTDAT([exp])) =
-                   (#test_fcn F) (PTexp F exp)
-
-                   (* (<test> <sequence>) *)
-  |   PTcond_clause F (cc as (LISTDAT(test::exp_tl))) =
-                   ((#testseq_fcn F) (PTexp F test,PTsequence F exp_tl) 
-                    handle ParseError mes => sig_err(mes,cc))
-
-  |   PTcond_clause F c = sig_err("Expected cond_clause",c)
-      
-  and PTcase_clause F (cc as (LISTDAT(LISTDAT(datumlst)::sequence))) =
-                   ((map (#datum_fcn F) datumlst,PTsequence F sequence)
-                    handle ParseError mes => sig_err(mes,cc))
-
-  |   PTcase_clause F c = sig_err("Expected case_clause",c)
-
-  and PTsequence F s = 
-      case s of
-           [exp]         => ([],PTexp F exp)
-      |    (exp::exp_tl) => let val (explst,exp') = PTsequence F exp_tl
-                            in
-                                ((PTexp F exp)::explst,exp')
-                            end
-      | _                => raise ParseError "Illegal empty sequence"
-      
-  and PTbindingspec F (LISTDAT([variable,exp])) =
-                   (PTvariable F variable, PTexp F exp)
-
-  |   PTbindingspec F b = sig_err("Expected bindingspec",b)
-          
-  and PTiterationspec F (LISTDAT([variable, init, step])) =
-                     (PTvariable F variable, PTexp F init, Some(PTexp F step))
-
-  |   PTiterationspec F (LISTDAT([variable, init])) =
-                     (PTvariable F variable, PTexp F init, None)
-
-  |   PTiterationspec F i = sig_err("Expected iterationspec",i)
-          
-           (* <variable> *)
-  and PTexp F (s as (SYMBDAT symbol)) = 
-           if not (SyntacticKeyword symbol) then 
-              (#variable_fcn F) symbol
-           else 
-               sig_err("Illegal syntactic keyword, expected expression",s)
-
-           (* <literal> *)
-           (* <self-evaluating> = <boolean>, <number>, <character>, <string> *)
-  |   PTexp F (BOOLDAT b)  = (#datum_fcn F) (BOOLDAT b)
-  |   PTexp F (CHARDAT c)  = (#datum_fcn F) (CHARDAT c)
-  |   PTexp F (NUMBDAT n)  = (#datum_fcn F) (NUMBDAT n)
-  |   PTexp F (STRIDAT s)  = (#datum_fcn F) (STRIDAT s)
-
-           (* <quotation> *)
-  |   PTexp F (LISTDAT([SYMBDAT "quote",datum])) =
-            (#datum_fcn F) datum
-
-           (* <lambda expression> *)
-           (* (lambda (<variable>* ) <body>) *)
-  |   PTexp F (exp as (LISTDAT((SYMBDAT "lambda")::
-                   (formals as (LISTDAT(lst)))::
-                   body))) =
-           ((#lambda_fcn F) ((PTformals F lst (#nullpar_fcn F)), PTbody F body)
-           handle ParseError mes => sig_err(mes,exp))
-    
-           (* (lambda (<variable>+ . <variable>) <body>) *)
-  |   PTexp F (exp as (LISTDAT((SYMBDAT "lambda")::
-                  (formals as (ILISTDAT(lst,variable)))::
-                  body))) =
-            let val variable' = PTvariable F variable
-            in
-                ((#lambda_fcn F) (PTformals F lst ((#varpar_fcn F) variable'), PTbody F body)
-                 handle ParseError mes => sig_err(mes,exp))
-            end
-
-           (* (lambda <variable> <body>) *)
-  |   PTexp F (exp as (LISTDAT((SYMBDAT "lambda")::
-                   (formals as (SYMBDAT variable))::
-                   body))) =
-           let val variable' = PTvariable F formals
-               val body'     = PTbody F body
-           in
-               ((#lambda_fcn F) ((#varpar_fcn F) variable', body')
-               handle ParseError mes => sig_err(mes,exp))
-           end 
-
-           (* <conditional> *)
-           (* (if <expression> <expression> <expression>) *)
-  |   PTexp F (LISTDAT([SYMBDAT "if", test, consequent, alternate])) =
-           (#if_fcn F) (PTexp F test, PTexp F consequent, Some (PTexp F alternate))
-
-           (* (if <expression> <expression>) *)
-  |   PTexp F (LISTDAT([SYMBDAT "if", test, consequent])) =
-            (#if_fcn F) (PTexp F test, PTexp F consequent, None)
-
-           (* <assignment> *)
-           (* (set! <variable> <expression>) *)
-  |   PTexp F (LISTDAT([SYMBDAT "set!", variable, expression])) =
-            (#assign_fcn F) (PTvariable F variable, PTexp F expression)
-
-           (* <derived expression> *)
-           (* 
-              (cond <cond clause>+ )                 | 
-              (cond <cond_clause>* (else <sequence>))
-           *)
-  |   PTexp F (c as (LISTDAT(SYMBDAT "cond"::cond_clauses))) =
-           let val (cond_part,else_part) = split_else cond_clauses
-           in
-               if else_part = [] then
-                  let val mp = 
-                      if cond_part = [] then 
-                     sig_err("Illegal empty conditional clause encountered",c) 
-                     else map (PTcond_clause F) cond_part
-                  val ccbody = Pcondlist2condcons F (mp, #nullcond_fcn F)
-               in
-                  (#cond_fcn F) ccbody
-               end
-             else
-               let val mp = map (PTcond_clause F) cond_part
-                   val seq = PTsequence F else_part
-                   val ccbody = Pcondlist2condcons F (mp, (#conddefault_fcn F)  seq)
-               in
-                   (#cond_fcn F) ccbody
-               end
-           end
-    
-           (*  (case <expression> <case clause>+ )                 |
-               (case <expression> <case clause>* (else <sequence>)
-            *)
-  |   PTexp F (c as (LISTDAT(SYMBDAT "case"::exp::case_clauses))) =
-            let val (case_part,else_part) = split_else case_clauses
-            in
-               if else_part = [] then
-                  let val mp = if case_part = [] then 
-	                     sig_err("Illegal empty case clause encountered",c)
-                          else
-		             map (PTcase_clause F) case_part
-                      val ccbody = Pcaselist2casecons F (mp, #nullcase_fcn F)
-                  in
-                      (#case_fcn F) (PTexp F exp, ccbody)
-                  end
-               else
-                  let val mp = map (PTcase_clause F) case_part
-                      val seq = PTsequence F else_part
-                      val ccbody = Pcaselist2casecons F (mp, (#casedefault_fcn F) seq)
-                  in
-                      (#case_fcn F) (PTexp F exp, ccbody)
-                  end
-            end  
-
-           (*  (and <test>* ) *)
-  |   PTexp F (LISTDAT(SYMBDAT "and"::tests)) = (#and_fcn F) (map (PTexp F) tests)
-
-           (*  (or <test>* ) *)
-  |   PTexp F (LISTDAT(SYMBDAT "or"::tests)) = (#or_fcn F) (map (PTexp F) tests)
-
-           (*  (let (<binding spec>* ) <body>) *)
-  |   PTexp F (exp as (LISTDAT(SYMBDAT "let":: 
-                  LISTDAT(bindingspecs)::
-                  body))) =
-           ((#let_fcn F) (map (PTbindingspec F) bindingspecs, PTbody F body)
-            handle ParseError mes => sig_err(mes,exp))
-
-           (*  (let <variable> (<binding spec>* ) <body>) *)
-  |   PTexp F (exp as (LISTDAT(SYMBDAT "let"::
-                  variable::
-                  LISTDAT(bindingspecs)::
-                  body))) =
-           ((#namedlet_fcn F) (PTvariable F variable, 
-                     map (PTbindingspec F) bindingspecs,
-                     PTbody F body)
-            handle ParseError mes => sig_err(mes,exp))
-
-           (*  (let* (<binding spec>* ) <body>) *)
-  |   PTexp F (exp as (LISTDAT(SYMBDAT "let*"::
-                  LISTDAT(bindingspecs)::
-                  body))) =
-           ((#lets_fcn F) (map (PTbindingspec F) bindingspecs, PTbody F body)
-            handle ParseError mes => sig_err(mes, exp))
-
-           (*  (letrec (<binding spec>* ) <body>) *)
-  |   PTexp F (exp as (LISTDAT(SYMBDAT "letrec"::
-                  LISTDAT(bindingspecs)::
-                  body))) =
-           ((#letrec_fcn F) (map (PTbindingspec F) bindingspecs, PTbody F body)
-            handle ParseError mes => sig_err(mes,exp))
-
-           (*  (begin <sequence>) *)
-  |   PTexp F (LISTDAT(SYMBDAT "begin"::sequence)) = (#begin_fcn F) (PTsequence F sequence)
-
-           (* (do (<iteration spec>* )
-              (<test> <sequence> )
-               <command>* )
-           *)
-  |   PTexp F (LISTDAT(SYMBDAT "do"::
-                  LISTDAT(iterationspecs)::
-                  LISTDAT(test::sequence)::
-                  commands)) =
-            (#do_fcn F) (map (PTiterationspec F) iterationspecs,
-            PTexp F test,
-            PTsequence F sequence,
-            map (PTexp F) commands)
-
-           (* (delay <expression> ) *)
-  |   PTexp F (LISTDAT([SYMBDAT "delay", exp])) = (#delay_fcn F) (PTexp F exp)
-
-           (* <quasiquotation> *)
-  |   PTexp F (lst as LISTDAT(SYMBDAT "quasiquote"::_ )) = PTquasiquotation F lst
-
-           (* <procedure call> *)
-           (* (<expression> <expression>* ) *)
-           (* 
-              NB! It is essential that this case of the definition is
-              the final (non-error) one, since its pattern is very
-              admissive and the case should only apply if none of
-              the others do.
-            *)
-  |   PTexp F (LISTDAT(operator::operandlist)) =
-           (#call_fcn F) (PTexp F operator, map (PTexp F) operandlist)
-
-  |   PTexp F e = sig_err("Illegal expression",e)
-      
-  fun PTcommand_or_definition (F : ('a,'b,'c,'d,'e,'f,'g,'h,'i) fcn_record) cd =
-                             if (isdefinition cd) then 
-                                (#definition_fcn F) (PTdefinition F cd)
-                             else
-                                (#command_fcn F) (PTexp F cd)
-
-
-
-  fun Pdat2command_or_definition F d = PTcommand_or_definition F d
-      
- 
-
-
-
-
-
 
 
 
