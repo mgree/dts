@@ -1,4 +1,0 @@
-signature SCHEMECOERCIONS =
-  sig
-  end
-  

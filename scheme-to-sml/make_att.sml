@@ -49,40 +49,44 @@ structure KernelAttributes =
   fun call (_, e: aexpf ,l: aargsf) (Env: parameter env): aexp = CALL (new_coercion(), e Env, l Env)
   fun lambda (_,f: ftrip,e: aexpf) (Env: parameter env): aexp = 
         let val (st: aforms,fenv: parameter env, c: coercion) = f 
-	    val nt = new_typevar()
-	    val nt' = new_typevar()
+            val nt = new_typevar()
+            val nt' = new_typevar()
         in LAMBDA ((COMP ((MAP (FUNC, [c,(IDC,nt,nt)]), func(hi_type c,nt), func(lo_type c,nt)), 
-		         make_coercion(func(lo_type c,nt),nt')), func(hi_type c, nt), nt'), 
-	           st, e (add (Env, fenv)))
+                         make_coercion(func(lo_type c,nt),nt')), func(hi_type c, nt), nt'), 
+                   st, e (add (Env, fenv)))
         end
   fun ifexp (_,e:aexpf,e':aexpf,e'':aexpf) (Env: parameter env): aexp = 
-	IF (new_coercion(), e Env, e' Env, e'' Env)
+        IF (new_coercion(), e Env, e' Env, e'' Env)
   fun assign (_,s:string,e:aexpf) (Env: parameter env): aexp = 
-	ASSIGN (new_coercion(), 
-		(lookup s Env handle Lookup => FREE (s, new_typevar()), ref []), 
- 	        e Env)
+        ASSIGN (new_coercion(), 
+                (lookup s Env handle Lookup => FREE (s, new_typevar()), ref []), 
+                e Env)
+  fun letexp (_,f,l,e) Env = 
+        let val (st, fenv, c) = f
+        in (* THIS IS WHERE YOU ARE!!!!! *)
+        LET (new_coercion(), 
   fun pairarg (_,e:aexpf,l:aargsf) (Env: parameter env): aargs = 
-	PAIRARG (new_coercion(), e Env, l Env)
+        PAIRARG (new_coercion(), e Env, l Env)
   fun nullarg _ (Env: parameter env): aargs = NULLARG (new_coercion())
   fun avarpar (_,s): ftrip = 
       let val nt = new_typevar()
-	  val new_par = LAMBOUND (s, nt)
+          val new_par = LAMBOUND (s, nt)
       in
       (AVARPAR ((),new_par), make_env (s, new_par), (IDC, nt, nt))
       end
   fun apairpar (_,s:string,f:ftrip): ftrip = 
       let val nt = new_typevar()
           val nt' = new_typevar()
-	  val new_par = LAMBOUND (s, nt)
-	  val (st, env, c) = f
+          val new_par = LAMBOUND (s, nt)
+          val (st, env, c) = f
       in 
       (lookup s env; raise StaticAnalysisError "Duplicate parameter")
        handle Lookup => 
           (APAIRPAR ((),new_par,st), 
            extend (env, s, new_par),
-	   (COMP (make_coercion(nt', pair(nt,lo_type c)), 
-	              (MAP (PAIR, [(IDC,nt,nt), c]), pair(nt,lo_type c), pair(nt, hi_type c))),
-	    nt', pair(nt, hi_type c))) 
+           (COMP (make_coercion(nt', pair(nt,lo_type c)), 
+                      (MAP (PAIR, [(IDC,nt,nt), c]), pair(nt,lo_type c), pair(nt, hi_type c))),
+            nt', pair(nt, hi_type c))) 
       end 
   fun anullpar _: ftrip = 
       let val nt = new_typevar()
@@ -96,10 +100,10 @@ structure KernelAttributes =
                    lambda = lambda,
                    ifexp = ifexp,
                    assign = assign,
-	           avarpar = avarpar,
+                   avarpar = avarpar,
                    apairpar = apairpar,
                    anullpar = anullpar,
-		   pairarg = pairarg,
+                   pairarg = pairarg,
                    nullarg = nullarg }
   in
   val make_attributes = apply_ehom evar_hom

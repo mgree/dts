@@ -1,8 +1,3 @@
-(*$SchemeGeneral: SCHEMEGENERAL *)
-
-structure SchemeGeneral (*: SCHEMEGENERAL *) = 
-  struct
-
   datatype 'a Option = None | Some of 'a
   datatype ('a, 'b) Result = OK of 'a | Fail of 'b
   type natural = int
@@ -23,6 +18,4 @@ structure SchemeGeneral (*: SCHEMEGENERAL *) =
 
   fun member x [] = false
     | member x (y::tl) = if x=y then true else (member x tl)
-
-  end
 

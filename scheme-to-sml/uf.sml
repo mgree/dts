@@ -1,20 +1,3 @@
-(*$UnionFind: UNIONFIND *)
-
-structure UnionFind (* : UNIONFIND *) =
-
-(* UNIONFIND DATA STRUCTURE WITH PATH COMPRESSION AND RANKED UNION
-
-Created by: Fritz Henglein, DIKU, University of Copenhagen (henglein@diku.dk)
-Date:       29 Dec 1994
-
-Maintenance: Author
-
-RCS LOG
-
-*)
-
-struct
-
   exception UnionFind of string
 
   datatype 'a UFC = 
@@ -48,7 +31,7 @@ struct
       let val p' = find p
           val q' = find q
       in if p' = q'
-	    then ()
+            then ()
          else p' := PTR q
       end
 
@@ -67,5 +50,3 @@ struct
                              else q':= PTR p'
                     | _ => raise UnionFind "union")
           end
-
-end

@@ -1,6 +1,3 @@
-structure SchemeDatum (*: SCHEMEDATUM *) =
-  struct
-
   datatype ('da, 'd) datum_hom =
       DHOM of { booldat: 'da * bool -> 'd,
                 chardat: 'da * string -> 'd,
@@ -226,5 +223,3 @@ structure SchemeDatum (*: SCHEMEDATUM *) =
              |    _ => parse_datum(tok) (* before input_line ip *)
          end
       end
-
-end

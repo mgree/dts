@@ -1,17 +1,10 @@
-(*$SchemeTypes: SchemeGeneral UnionFind *)
-
-structure SchemeTypes =
-  struct
-  local open SchemeGeneral UnionFind 
-  in
-
   (* TYPE TAGS *)
   
   datatype type_tag = FUNC | BOOL | NIL | PAIR | CHAR | SYMBOL |
-  	STRING | NUMBER | VECTOR | UNSPEC 
+        STRING | NUMBER | VECTOR | UNSPEC 
 
   val type_tags = [FUNC, BOOL, NIL, PAIR, CHAR, SYMBOL, 
-  	STRING, NUMBER, VECTOR, UNSPEC]
+        STRING, NUMBER, VECTOR, UNSPEC]
   
   datatype shade = WHITE | GREY | BLACK
 
@@ -24,7 +17,7 @@ structure SchemeTypes =
   
   and attributes = 
     ATT of { equivptr: atype Option ref, 
-    	     generic: bool ref,
+             generic: bool ref,
              preds: atype list ref, 
              succs: atype list ref,
              pos: bool ref, 
@@ -32,13 +25,13 @@ structure SchemeTypes =
              interpreted: bool ref,
              instance: atype Option ref, 
              instantiated: bool ref,
-	     color: shade ref }
+             color: shade ref }
 
   withtype atype = (utype * attributes) UF
   
   fun make_attrib () = 
       ATT { equivptr = ref None, 
-      	    generic = ref false,
+            generic = ref false,
             preds = ref nil, 
             succs = ref nil,
             pos = ref false, 
@@ -46,7 +39,7 @@ structure SchemeTypes =
             interpreted = ref false, 
             instance = ref None,
             instantiated = ref false,
-	    color = ref WHITE }
+            color = ref WHITE }
 
   (* selection functions *)
   fun utype (aty: atype) = #1 (!!aty)
@@ -80,12 +73,12 @@ structure SchemeTypes =
   (* make a new dynamic type *)
   fun make_dyn_type l = 
       let fun make_dyn_function [] = (fn _ => new_typevar())
-    	    | make_dyn_function (a::r) =
-      		    (case utype a of
-         		   SIMPLE (tt, _) => 
-         		   	 (fn tt' => if tt = tt' then a else make_dyn_function r tt')
-       			 | _ => error ("make_dyn_function", 
-       			 	           "Only simple types allowed in make_dyn_function"))
+            | make_dyn_function (a::r) =
+                    (case utype a of
+                           SIMPLE (tt, _) => 
+                                 (fn tt' => if tt = tt' then a else make_dyn_function r tt')
+                         | _ => error ("make_dyn_function", 
+                                           "Only simple types allowed in make_dyn_function"))
       in make (DYN (make_dyn_function l), make_attrib()) 
       end
 
@@ -112,12 +105,12 @@ structure SchemeTypes =
                 (DYN f, DYN f') => (union (t1', t2'); 
                                     apply aliassimple (zip (summands f, summands f')))
               | (DYN f, SIMPLE (tt, _)) => 
-              				(get #equivptr t2' := Some t1';
-              				 aliassimple (f tt, t2))
+                                        (get #equivptr t2' := Some t1';
+                                         aliassimple (f tt, t2))
               | (DYN _, TVAR _) => get #equivptr t2' := Some t1'
               | (SIMPLE (tt, _), DYN f) => 
-              				(get #equivptr t1' := Some t2';
-              				 aliassimple (t1, f tt))
+                                        (get #equivptr t1' := Some t2';
+                                         aliassimple (t1, f tt))
               | (SIMPLE (tt, _), SIMPLE (tt', _)) => 
                    if tt = tt' then
                       aliassimple (t1, t2)
@@ -135,20 +128,20 @@ structure SchemeTypes =
          then ()
       else case (utype t1, utype t2) of
              (SIMPLE (_, tlist), SIMPLE (_, tlist')) =>
-				(union (t1, t2);
+                                (union (t1, t2);
                  apply aliasvar (zip (tlist, tlist')))
            | (TVAR _, SIMPLE _) => link (t1, t2)
            | (SIMPLE _, TVAR _) => link (t2, t1)
            | (TVAR _, TVAR _) => union (t1, t2)
            | (_,_) => error ("aliassimple", "Illegal type aliasing attempted")
   and aliasvar (t1, t2): unit =
-  	  if equal (t1, t2)
-  	  	 then ()
-  	  else case (utype t1, utype t2) of
-  	  	     (TVAR _, TVAR _) => (union (t1, t2);
-  	  	     					  equiv (t1, t2))
-  	  	   | (_, _) => error ("aliasvar", "Arguments must be type variables!")
-  	  	   
+          if equal (t1, t2)
+                 then ()
+          else case (utype t1, utype t2) of
+                     (TVAR _, TVAR _) => (union (t1, t2);
+                                                          equiv (t1, t2))
+                   | (_, _) => error ("aliasvar", "Arguments must be type variables!")
+                   
   fun unify (t1, t2) =
       if equal (t1, t2) 
          then ()

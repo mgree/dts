@@ -1,4 +1,0 @@
-signature SCHEMEPOLYTYPES =
-  sig
-  end
-  
