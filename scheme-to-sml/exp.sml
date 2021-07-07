@@ -1,7 +1,6 @@
 structure Exp (*: KERNELEXP *) =
   struct 
-  local open Datum General
-  in
+  open Datum General
 
   type 'v var = string * 'v
 
@@ -95,6 +94,5 @@ structure Exp (*: KERNELEXP *) =
   fun read_exp (INIT J) ip = 
   	dat2exp (#parameter J, #variable J) (read_datum (#exp J) ip)
 
-  end
 end
 

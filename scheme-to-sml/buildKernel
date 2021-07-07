@@ -1,6 +1,6 @@
 (* Build system *)
 
-use "general.sml"; (* open SchemeGeneral; *)
+use "general.sml"; open General;
 use "uf.sig"; 
 use "uf.sml"; (* open UnionFind; *)     
 use "env.sml"; (* open Environment; *)
