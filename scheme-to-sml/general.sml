@@ -13,10 +13,10 @@ structure General (*: SCHEMEGENERAL *) =
   exception EXIT
 
   fun error (s1,s2) = 
-  	(output(std_out, "Error in " ^ s1 ^ ": " ^ s2); raise IllegalInput (s1,s2))
+  	(print("Error in " ^ s1 ^ ": " ^ s2); raise IllegalInput (s1,s2))
 
-  fun debug(x,y) = (output(std_out,"DEBUG:\n");
-                    output(std_out, x^"  "^y^"\n"))
+  fun debug(x,y) = (print("DEBUG:\n");
+                    print(x^"  "^y^"\n"))
 
 
   fun apply f [] = ()
