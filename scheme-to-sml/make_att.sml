@@ -41,7 +41,7 @@ in
     | att_datum (VECTDAT l, _) =
 	let val t = tvar()
             val (es,Vs,Es,ts) = 
-		fold (fn ((e,V,E,t), (es,Vs,Es,ts)) => (e::es, V@Vs, E@Es, t::ts))
+		List.foldr (fn ((e,V,E,t), (es,Vs,Es,ts)) => (e::es, V@Vs, E@Es, t::ts))
 		     (map att_datum l)
 		     (nil,nil,nil,nil)
             val c = case ts of 

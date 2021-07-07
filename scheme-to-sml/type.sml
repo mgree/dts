@@ -69,13 +69,13 @@ structure Type =
       case !!tn of
 	TNODE { succs = ss, preds = ps, 
 	        pos = p, neg = n, instance = i, ... } => 
-		(r := nil; ss := nil; ps := nil; 
+		((*r := nil; *) ss := nil; ps := nil; 
 	         p := false; n := false; i := undef_tnode)
       | UNDEF => ()
 
   val dynamic = mk_tnode (DYNAMIC, [])
   fun tvar() = mk_tnode (TVAR, [])
-  fun bool = mk_tnode (BOOL, [])
+  fun bool() = mk_tnode (BOOL, [])
   fun char() = mk_tnode (CHAR, [])
   fun string() = mk_tnode (STRING, [])
   fun symbol() = mk_tnode (SYMBOL, [])
@@ -138,7 +138,7 @@ structure Type =
       else uref (COERCE { node_id = new_cid(),
 			  dom_type = t1,
 			  rng_type = t2,
-		          seen = ref bool
+		          seen = ref false, (* MMG ?! *)
 			  instance = ref undef_coercion })
   end
 
