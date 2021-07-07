@@ -1,0 +1,18 @@
+		Dynamically Typed Scheme (DTS)
+
+Dynamically typed is an explicitly typed version of Scheme with
+dynamic types (sum types).
+
+Every module should contain the following parts:
+
+type T 			(* the type being defined *)
+val parse: string -> (T * string, T Option * string) Result
+val read: instream -> (T, T Option) Result
+	(* the parsing routines for reading external representations *)
+val string: T -> string 
+val print: outstream -> T -> unit
+	(* the conversion/printing routines for producing external
+	   representations *) 
+val eq: T -> T -> boolean
+val eqv: T -> T -> boolean
+val equal: T -> T -> boolean

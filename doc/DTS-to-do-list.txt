@@ -1,0 +1,52 @@
+Problems/programming tasks left to be done:
+
+(1)	Polymorphic type inference for let-expressions:
+	
+	extend kernel language with let- and letrec-expressions;
+	assign type schemes to let- and letrec-bound variables;
+	extend all phases to let- and letrec-expressions;
+	(use routines in polytypes.sml: "close", for closing a type with respect to 
+	a given environment, and "instantiate", for instantiating a coercive
+	type scheme)
+	
+(2) Extension of definition of expressions to incorporate all of IEEE 
+    Scheme; leave backquotations until last
+	
+(3) Cycle elimination: implement strongly connected components
+
+(4) Source/sink calculation: change current implementation to have _two_
+    ecr's, one for the sources of a type, the other for the sinks of a type
+    (instead of one now)
+    
+(5) Interpretation of coercions: change interpretation of coercions to 
+    the two ecr's into account, not just the one as is the case now.
+    
+(6) Translation of abstract syntax trees to Standard ML abstract syntax
+    (ML Kit); two modes: for static binding of free variables in 
+    definitions (nonstandard Scheme semantics) and for dynamic binding of 
+    free variables in definitions (standard Scheme semantics)
+    
+	
+Treatment of:
+
+	equality predicates (what types should they have?)
+	
+	assignments (propagate a side-effected type/type variable during 
+	unifications)
+	
+	call/cc (ooha, leave until last)
+	
+	...
+	
+	
+Issues:
+
+Maybe it's worthwhile trying to implement some form of nonparametric 
+polymorphism for I/O, type testing and equality operations; that is,
+	
+eq? has type Forall t. (t x t x nil) -> bool, where capital Forall 
+indicates that the type argument has to be passed explicitly.
+E.g. eq?{Number}: Number x Number x nil -> bool.  Here Number is passed 
+to eq? explicitly at run-time (most of the time these parameters can be 
+partially evaluated away). 
+	

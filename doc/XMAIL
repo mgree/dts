@@ -1,0 +1,235 @@
+BABYL OPTIONS:
+Version: 5
+Labels:
+Note:   This is the header of an rmail file.
+Note:   If you are seeing it in rmail,
+Note:    it means the file has no messages in it.
+
+1,,
+Summary-line:  6-Oct               reps@diku.dk  #for .Xdefaults
+Received: from tandgrisner.diku.dk by odin.diku.dk with SMTP id AA23868
+  (5.65+/IDA-1.3.5 for henglein); Wed, 6 Oct 93 10:18:19 +0100
+Received: by tandgrisner.diku.dk id AA08061
+  (5.65+/IDA-1.3.5 for henglein@tandgrisner.diku.dk); Wed, 6 Oct 93 10:18:17 +0100
+Date: Wed, 6 Oct 93 10:18:17 +0100
+From: reps@diku.dk
+Message-Id: <9310060918.AA08061@tandgrisner.diku.dk>
+To: henglein@diku.dk
+Subject: for .Xdefaults
+
+*** EOOH ***
+Date: Wed, 6 Oct 93 10:18:17 +0100
+From: reps@diku.dk
+To: henglein@diku.dk
+Subject: for .Xdefaults
+
+#ifdef COLOR
+scheme_syn.styleDefinition: Normal : times,18 ; \n\
+Keyword : +bold, <slateblue3,white,*,*> ; \n\
+Placeholder : +italic, <steelblue,white,*,*>  ; \n\
+Program: times,18, <steelblue,white,*,*> ; \n\
+Comment : helv,18, <forest green,white,*,*> ; \n\
+Error : times,18,+b,<red,*,*,*> ; \n\
+Type : times,18,+b,<blue,*,blue,*> ; \n\
+Dynamic : times,18,<*,magenta,*,*> ; \n\
+largest : times,18, +bold; \n\
+new-text-buffers : <*,gray85,*,*> ; \n\
+old-text-buffers : <*,gray95,*,*> ; \n\
+new-characters : courier, +bold <royalblue1,gray75,*,*> ; \n\
+text-buffers-other-view : helvetica, <palevioletred4,*,*,*> ; \n\
+default: times, 18, <blue3,white,blue3,wheat>;\n\
+docCard: times; \n\
+docCommandName: <black,*,*,*>, helv, +bold;\n\
+docMachine: helv, <steelblue4,*,*,*>;\n\
+docButton: <forest green,*,*,*>, +italic; \n\
+docTitle: <black,*,*,*>, helv ;\n\
+docPathName: <red,*,*,*>,courier, +italic;
+#else
+scheme_syn.styleDefinition: Normal : times,18 ; \n\
+Keyword : +bold ; \n\
+Placeholder : +italic  ; \n\
+Program: times,18 ; \n\
+Comment : helv,18 ; \n\
+Error : times,18,+b ; \n\
+Type : times,18,+b ; \n\
+Dynamic : times,18 ; \n\
+largest : times,18, +bold; \n\
+new-text-buffers : courier ; \n\
+old-text-buffers : courier ; \n\
+new-characters : courier, +bold  ; \n\
+text-buffers-other-view : helvetica ; \n\
+default: times, 18;\n\
+docCard: times; \n\
+docCommandName: helv, +bold;\n\
+docMachine: helv;\n\
+docButton: +italic; \n\
+docTitle: helv ;\n\
+docPathName: courier, +italic;
+#endif
+
+
+1, forwarded,,
+Summary-line:  6-Oct               reps@diku.dk  #more things to set
+Received: from tandgrisner.diku.dk by odin.diku.dk with SMTP id AA24014
+  (5.65+/IDA-1.3.5 for henglein); Wed, 6 Oct 93 10:23:25 +0100
+Received: by tandgrisner.diku.dk id AA08087
+  (5.65+/IDA-1.3.5 for henglein@tandgrisner.diku.dk); Wed, 6 Oct 93 10:23:23 +0100
+Date: Wed, 6 Oct 93 10:23:23 +0100
+From: reps@diku.dk
+Message-Id: <9310060923.AA08087@tandgrisner.diku.dk>
+To: henglein@diku.dk
+Subject: more things to set
+
+*** EOOH ***
+Date: Wed, 6 Oct 93 10:23:23 +0100
+From: reps@diku.dk
+To: henglein@diku.dk
+Subject: more things to set
+
+(1) Ask the lab to put you in the "syn" group
+
+(2) In your .cshrc file, add:
+
+	setenv SYNLOC /home/tandgrisner/u1/sgen/sparc
+
+(3) In your .xsession file, add:
+
+	xrdb -merge $SYNLOC/resources/syngen_resources
+	xrdb -merge $SYNLOC/resources/syngen_resources.color
+
+(4) In your .Xdefaults file, add the definitions I sent earler.
+
+(5) Logout; login; start up your xserver again to make sure all initializations
+    are performed.
+
+(6) Execute
+
+	~reps/Scheme/scheme_syn
+
+
+
+1,,
+Summary-line: 20-Oct               reps@diku.dk  #"Stable" version of scheme editor
+Received: from tandgrisner.diku.dk by odin.diku.dk with SMTP id AA18823
+  (5.65+/IDA-1.3.5 for henglein); Wed, 20 Oct 93 15:43:49 +0100
+Received: by tandgrisner.diku.dk id AA26330
+  (5.65+/IDA-1.3.5 for henglein@tandgrisner.diku.dk); Wed, 20 Oct 93 15:43:49 +0100
+Date: Wed, 20 Oct 93 15:43:49 +0100
+From: reps@diku.dk
+Message-Id: <9310201443.AA26330@tandgrisner.diku.dk>
+To: henglein@diku.dk
+Subject: "Stable" version of scheme editor
+
+*** EOOH ***
+Date: Wed, 20 Oct 93 15:43:49 +0100
+From: reps@diku.dk
+To: henglein@diku.dk
+Subject: "Stable" version of scheme editor
+
+/home/tandgrisner/reps/Scheme/scheme_syn.stable
+
+
+1,,
+Summary-line: 19-May               mael@diku.dk  #Reorganization of ML Kit directory structure.
+Mail-from: From mael Fri May 19 00:58:34 1995
+>From mael@diku.dk  Fri May 19 00:58:08 1995
+Received: from frigg.diku.dk (mael@frigg.diku.dk [130.225.96.247]) by odin.diku.dk (8.6.12/8.6.12) with ESMTP id AAA08520; Fri, 19 May 1995 00:57:41 +0200
+From: Martin Elsman <mael@diku.dk>
+Received: (mael@localhost) by frigg.diku.dk (8.6.12/8.6.12) id AAA10881; Fri, 19 May 1995 00:57:39 +0200
+Date: Fri, 19 May 1995 00:57:39 +0200
+Message-Id: <199505182257.AAA10881@frigg.diku.dk>
+To: mael@diku.dk, tofte@diku.dk, henglein@diku.dk, faxe@diku.dk,
+        hojfeld@diku.dk, hniss@diku.dk, myth@diku.dk, bombadil@diku.dk,
+        knud@diku.dk, rehof@diku.dk, panic@diku.dk, kvik@diku.dk,
+        birkedal@cs.cmu.edu
+Subject: Reorganization of ML Kit directory structure.
+
+*** EOOH ***
+>From mael@diku.dk  Fri May 19 00:58:08 1995
+From: Martin Elsman <mael@diku.dk>
+Date: Fri, 19 May 1995 00:57:39 +0200
+To: mael@diku.dk, tofte@diku.dk, henglein@diku.dk, faxe@diku.dk,
+        hojfeld@diku.dk, hniss@diku.dk, myth@diku.dk, bombadil@diku.dk,
+        knud@diku.dk, rehof@diku.dk, panic@diku.dk, kvik@diku.dk,
+        birkedal@cs.cmu.edu
+Subject: Reorganization of ML Kit directory structure.
+
+Dear Kit programmer,
+
+To avoid unnecessary code duplication in different versions of the ML
+Kit (we now also have a backend for HPPA) and to make it easy to
+navigate we have decided to reorganize the directory structure of the
+Kit.
+
+The source directory now looks as follows
+
+ .../src/
+        use.C_24t
+        use.HPPA_24t
+	ML_CONSULT_Interpreter
+	ML_CONSULT_C24t
+	ML_CONSULT_HPPA24t
+	Parsing/
+		PARSE.sml Topdec.grm ...
+	Common/
+		EfficientElab/
+			...
+		EVALTOPDEC.sml KitCompiler.sml (building functor) ...
+	Interpreter/
+		Evaluation.sml (building functor)
+		EvalTopDec.sml ...
+	Compiler/
+		CompileAndRun.sml (as Interpreter/EvalTopDec)
+		Evaluation.sml (open functor)
+		Lambda/
+			LAMBDA_EXP.sml CompileDec.sml ...
+		Regions/
+			TARGET_EXP.sml ...
+		Kam/
+			KIT_ABSTRACT_MACHINE.sml KAM_BACKEND.sml
+			CompileLambda.sml ...
+		Cfg/
+			CfgKitAbstractMachine.sml TransformCfg.sml ...
+		Hppa/
+			Runtime/
+				Rorun/
+					rorun.h	rorun.c
+			HppaKamBackend.sml (building functor)
+			CfgToHppa.sml ...
+		PowerPc/ 
+			... ;)
+		C/
+			Runtime/
+				Version11/
+					runtime.h runtime.c
+			CKamBackend.sml (building functor)
+			CKitAbstractMachine.sml CCode.sml ...
+
+
+The 'old' source directory is now .../oldsrc/. Almost everything has
+been copied to the 'new' directory structure.
+
+Both ML_CONSULT_C24t and ML_CONSULT_HPPA24t have been tested. You can
+use these files together with use.C_24t and use.HPPA_24t as templates
+for your own versions. Both the C version and the HPPA version uses
+Flags.ccode_filename as a reference to a string, denoting the absolute
+path to the target file (the HPPA version generates assembler code).
+
+If you have problems then mail me or visit me at my office (N208).
+
+Also, if you know of anyone who uses the Kit and who is not receiving
+this mail then please forward it.
+
+By the way - It seems that we are running out of space on fenris,
+Fritz ;) !!
+
+Good luck,
+
+-- 
+-- Martin
++-------------------------------------------------------------------------+
+| Martin Elsman   Rosenborggade 6, 1.th   DK - 1130 Kbh. K   +45 33111241 |
+| mael@diku.dk  http://www.diku.dk/research-groups/topps/people/mael.html |
++-------------------------------------------------------------------------+
+
+

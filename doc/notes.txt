@@ -1,0 +1,43 @@
+Notes:
+
+-- Quotation, backquotation
+
+quote does not have to be a type specific operation: 
+o for booleans, characters, strings, symbols, literal vectors, numbers,
+  it is simply the identity function
+o lists/pairs, it is, too!
+
+-- Dynamic-to-boolean conversion
+
+add a case for an exception that says "False" to yield false
+
+
+-- Improper lists
+
+Improper lists are only necessary for the append procedure.  Currently
+the append procedure operates only on lists of (proper lists).  A
+work-around is to offer a "dynamic" append function which works on
+dynamic objects and creates pairs.
+
+-- Strings
+
+make-string with only one argument is not implemented
+
+-- Numbers
+
+number2string with multiple arguments has only that with all arguments
+
+-- Vectors
+
+make-vector is only there with explicit fill argument
+
+-- Delay/force
+
+Force is not implemented correctly, as repeated forcing just repeats
+the calculation of the value.  Delay actually computes the value first
+and is only useful if the argument really terminates.
+
+-- IO
+
+Problem with mutual dependence of port on dynamic and vice versa.
+

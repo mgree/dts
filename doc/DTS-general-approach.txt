@@ -1,0 +1,22 @@
+General approach to dynamic type inference for Scheme:
+
+Reduction of Scheme to Scheme kernel language
+
+Abstract syntaxt for Kernel Scheme with a coercion attribute at each 
+node.
+
+A coercion consists of two types: (T1, T2), to be interpreted as the 
+canonical coercion from T1 to T2.
+
+A type is either a type variable or a type constructor with a list of argument types.
+
+Type variables can be unified (made equal to each other) during simple 
+closure analysis.
+
+Type variables also support equivalencing ("congruencing") with other 
+type variables during simple closure analysis.
+
+Forget about lists.  Do the whole thing for dynamics first.
+
+Let's begin with simple stuff.
+

@@ -1,0 +1,6 @@
+DTS Project Notes:
+
+-> How does programming with homomorphisms over syntax tree
+work?
+
+-> Can we use higher-order syntax?
