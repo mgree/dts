@@ -66,10 +66,10 @@ fun set_preds_succs c =
 			   val p2 = lookup dom_type tc1 (!preds2)                      
 		       in ((case s2 of
 			      None => ()
-			    | Some c' => unifyS (t1, rng_type c'));
+			    | Some(c') => unifyS (t1, rng_type c'));
                            (case p2 of
 			      None => (preds2 := c :: (!preds2))
-			      Some c' => let val t1' = dom_type c'
+			      Some(c') => let val t1' = dom_type c'
 		 		         in (union (c,c'); unifyS(t1,t1'))
 		                         end))
                        end
@@ -79,10 +79,10 @@ fun set_preds_succs c =
 			   val p1 = lookup dom_type tc1 (!preds2)                      
 		       in ((case p1 of
 			      None => ()
-			    | Some c' => unifyS (t2, dom_type c'));
+			    | Some(c') => unifyS (t2, dom_type c'));
                            (case s1 of
 			      None => (succs1 := c :: (!succs1))
-			      Some c' => let val t2' = rng_type c'
+			      Some(c') => let val t2' = rng_type c'
 		 		         in (union (c,c'); unifyS(t2,t2'))
 		                         end))
                        end
@@ -179,7 +179,7 @@ fun normE nil = nil
 	then normE r
 	else (seen c := true;
 	      case !!c of
-		COERCE _ => c :: normE r
+		COERCE(_) => c :: normE r
 	      | _ => normE r
 in
 fun normalizeE E =
@@ -229,7 +229,7 @@ and set_negC c =
 	 else (neg t := true;
 	       case type_tag t of
 		 TVAR => error ("set_negC", "Illegal successor (nonshallow type)")
-	       | FUNC => let [t1,t2] = children t
+	       | FUNC => let val [t1,t2] = children t
 	                 in (set_pos t1; set_neg t2)
 	                 end
 	       | _ => app set_neg (children t))
