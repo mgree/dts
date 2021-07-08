@@ -3,6 +3,8 @@
 structure General (*: SCHEMEGENERAL *) = 
   struct
 
+  open TextIO
+
   datatype 'a Option = None | Some of 'a
   datatype ('a, 'b) Result = OK of 'a | Fail of 'b
   type natural = int
@@ -13,10 +15,10 @@ structure General (*: SCHEMEGENERAL *) =
   exception EXIT
 
   fun error (s1,s2) = 
-  	(output(std_out, "Error in " ^ s1 ^ ": " ^ s2); raise IllegalInput (s1,s2))
+  	(output(stdErr, "Error in " ^ s1 ^ ": " ^ s2); raise IllegalInput (s1,s2))
 
-  fun debug(x,y) = (output(std_out,"DEBUG:\n");
-                    output(std_out, x^"  "^y^"\n"))
+  fun debug(x,y) = (output(stdErr,"DEBUG:\n");
+                    output(stdErr, x^"  "^y^"\n"))
 
 
   fun apply f [] = ()
@@ -26,7 +28,7 @@ structure General (*: SCHEMEGENERAL *) =
     | zip (a::r, a'::r') = (a,a')::zip (r,r')
     | zip (_, _) = error ("zip", "lists of different lengths")
 
-  fun foldappend ls = fold op@ ls nil
+  fun foldappend ls = List.foldr op@ nil ls
 
   fun member x [] = false
     | member x (y::tl) = if x=y then true else (member x tl)
