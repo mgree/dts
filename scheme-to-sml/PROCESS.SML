@@ -1,24 +1,46 @@
-(* Do the whole process *)
+(* Do the whole process for definitions *)
 local
-open Constraint Type Environment General Exp
-val ue = parse std_in (* parse input stream into an unattributed expression *) 
-val ae = make_attributes ue empty_env (* translate unattributed expression into att. exp. *)
-val ke1 = display ae
-val t = unify_types ae (* unify types according to local equational type rules *)
-val C = get_constraints ae (* collect all constraints *)
+open Constraint Type PolyType Environment SchemeGeneral Exp
+val _ = pd := 5
+val ud = parse_def std_in (* parse input stream into a preattributed definition *) 
+val ad = make_attributes_def ud topenv 
+	     (* translate preattributed expression into attributed definition *)
+val ae = case ad of DEFINE (_, ae) => ae
+         (* extract expression part from definition *)	     
+val kd1 = display_def ad
+val t = unify_type_def ad (* unify types according to local equational type rules *)
+val C = get_constraint_def ad (* collect all constraints *)
 in
-val attexp = ke1
-val canannot = display ae
-val constraints = show_constraints [C]
+val _ = pd := 20
+val att_def = kd1
+val can_annot = display_def ad
+val constraints = show_constraints C
 val _ = induced_unify C (* unify types according to requirements of simple VFG *)
-val svfg = display ae
-val _ = pred_succs C (* set predecessor and successor attributes in each type *)
+val svfg = display_def ad
+val _ = pred_succs C (* set predecessors and successors in svfg *)
 val _ = make_acyclic C (* collapse all strong components in SVFG *)
-val asvfg = display ae
-val _ = tvar_usage (ae, t) (* mark types that may come 
-    							  from/escapte to context *)
-val _ = type_int C (* interpret types according to nondirected 
-        					  SVFG information *)
-val final = display ae
+val asvfg = display_def ad
+val _ = (reset_pred_succs C; pred_succs C) (* set preds/succs of asvfg *)
+local
+val N = get_types C (* get types in C *)
+in
+val _ = set_sources N (* set source types for all types *)
+val _ = set_sinks N (* set sink types for all types *)
+val _ = set_types N (* set types according to sources and sinks *)
 end
+val final = display_def ad
+val constraints_final = show_constraints C
+local
+val coercion_params = coercion_parameters (aflatten [C])
+in
+val coercion_pars = map show_constraint coercion_params
+val poly_type = show_polytype (close (coercion_params, t))
+end
+end
+
+
+
+
+
+
 

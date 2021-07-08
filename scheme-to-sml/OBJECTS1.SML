@@ -1,16 +1,50 @@
 structure Datum =
   struct
 
-  datatype 'a dat=
-      BOOLDAT of bool |
-      CHARDAT of string |
-      STRIDAT of string |
-      SYMBDAT of string |
-      NUMBDAT of string |
-      VECTDAT of 'a datum list |
-      PAIRDAT of 'a datum * 'a datum |   
-      NILDAT
-  withtype 'a datum = 'a dat * 'a
+  datatype ('da, 'd) datum_hom =
+      DHOM of { booldat: 'da * bool -> 'd,
+                chardat: 'da * string -> 'd,
+                stridat: 'da * string -> 'd,
+                symbdat: 'da * string -> 'd,
+                numbdat: 'da * string -> 'd,
+                vectdat: 'da * 'd list -> 'd,
+                pairdat: 'da * 'd * 'd -> 'd,
+                nildat: 'da -> 'd 
+              }
+
+  datatype 'a datum =
+      BOOLDAT of 'a * bool |
+      CHARDAT of 'a * string |
+      STRIDAT of 'a * string |
+      SYMBDAT of 'a * string |
+      NUMBDAT of 'a * string |
+      VECTDAT of 'a * 'a datum list |
+      PAIRDAT of 'a * 'a datum * 'a datum |   
+      NILDAT of 'a
+
+  fun dattrib (BOOLDAT (a,_)) = a
+    | dattrib (CHARDAT (a,_)) = a
+    | dattrib (STRIDAT (a,_)) = a
+    | dattrib (SYMBDAT (a,_)) = a
+    | dattrib (NUMBDAT (a,_)) = a
+    | dattrib (VECTDAT (a,_)) = a
+    | dattrib (PAIRDAT (a,_,_)) = a
+    | dattrib (NILDAT a) = a
+   
+  fun apply_dhom (DHOM D) = 
+      let fun dapply (BOOLDAT x) = #booldat D x
+            | dapply (CHARDAT x) = #chardat D x
+            | dapply (STRIDAT x) = #stridat D x
+            | dapply (SYMBDAT x) = #symbdat D x
+            | dapply (NUMBDAT x) = #numbdat D x
+            | dapply (VECTDAT (a,dl)) = #vectdat D (a, map dapply dl)
+            | dapply (PAIRDAT (a, d1, d2)) = 
+                        #pairdat D (a, dapply d1, dapply d2)
+            | dapply (NILDAT a) = #nildat D a 
+      in dapply 
+      end
+
+  
 
   datatype token =
       Identifier of string
@@ -193,4 +227,182 @@ structure Datum =
          end
       end
 
-end
+end;
+
+structure Exp =
+  struct 
+  local open Datum SchemeGeneral
+  in
+
+  type 'v var = string * 'v
+  
+  datatype ('a, 'd, 'e, 'l, 'f, 't, 'v) exp_hom =
+    EHOM of { noexp: 'a -> 'e,
+              literal: 'd -> 'e,
+              variable: 'a * 'v var -> 'e,
+              call: 'a * 'e * 'l -> 'e,
+              lambda: 'a * 'f * 'e -> 'e,
+              ifexp: 'a * 'e * 'e * 'e -> 'e,
+              assign: 'a * 'v var * 'e -> 'e,
+              pairarg: 'a * 'e * 'l -> 'l,
+              nullarg: 'a -> 'l,
+              avarpar: 't var -> 'f,
+              apairpar: 't var * 'f -> 'f,
+              anullpar: unit -> 'f }
+
+  datatype ('a, 't, 'v) exp =
+    NOEXP of 'a |
+    LITERAL of 'a datum |
+    VARIABLE of 'a * 'v var |
+    CALL of 'a * ('a, 't, 'v) exp * ('a, 't, 'v) args |
+    LAMBDA of 'a * 't formals * ('a, 't, 'v) exp |
+    IF of 'a * ('a, 't, 'v) exp * ('a, 't, 'v) exp * ('a, 't, 'v) exp |  
+    ASSIGN of 'a * 'v var * ('a, 't, 'v) exp 
+ 
+
+  
+
+  and ('a, 't, 'v) args =
+    PAIRARG of 'a * ('a, 't, 'v) exp * ('a, 't, 'v) args |
+    NULLARG of 'a
+
+  and 't formals =
+    AVARPAR of 't var |
+    APAIRPAR of 't var * 't formals |
+    ANULLPAR
+
+  datatype ('a, 't, 'v) def = 
+    DEFINE of ('t var) * ('a, 't, 'v) exp 
+  
+  type ('a, 't, 'v) program = ('a, 't, 'v) def list 
+
+  fun eattrib (NOEXP a) = a
+    | eattrib (LITERAL d) = dattrib d
+    | eattrib (VARIABLE (a,v)) = a
+    | eattrib (CALL (a,_,_)) = a
+    | eattrib (LAMBDA (a,_,_)) = a
+    | eattrib (IF(a,_,_,_)) = a
+    | eattrib (ASSIGN(a,_,_)) = a 
+
+  fun apply_ehom (EHOM E) =
+      let fun eapply (NOEXP a) = #noexp E a
+            | eapply (LITERAL d) = #literal E d
+            | eapply (VARIABLE (a,v)) = #variable E (a,v) 
+            | eapply (CALL (a, e, l)) = #call E (a, eapply e, lapply l)
+            | eapply (LAMBDA (a, f, e)) = #lambda E (a, fapply f, eapply e)
+            | eapply (IF (a, e1, e2, e3)) = #ifexp E (a, eapply e1, eapply e2, eapply e3)
+            | eapply (ASSIGN (a, v, e)) = #assign E (a, v, eapply e)
+          and fapply (AVARPAR v) = #avarpar E v
+            | fapply (APAIRPAR (v, f')) = #apairpar E (v, fapply f')
+            | fapply ANULLPAR = #anullpar E () 
+          and lapply (PAIRARG (a, e, l')) = #pairarg E (a, eapply e, lapply l')
+            | lapply (NULLARG a) = #nullarg E a 
+      in eapply
+      end
+
+  exception ParseError of string
+  fun parseError s = (output(std_out, "Parse error: " ^ s); 
+  					  raise ParseError s)
+ 
+  val keywords = ["lambda", "if", "set!", "quote", "define"]
+        
+  fun dat2ast (parinit, varinit) = 
+      let fun dat2program (NILDAT _) = nil
+            | dat2program (PAIRDAT (_, d1, d2)) =
+            	dat2def d1 :: dat2program d2
+            | dat2program _ = parseError "Illegal program"
+      	  and dat2def (PAIRDAT(_, SYMBDAT(_, "define"),
+                       PAIRDAT(_, d1, PAIRDAT (_, d2, NILDAT _)))) =
+                 DEFINE (dat2par d1, dat2exp d2)  
+            | dat2def _ = parseError ("Illegal definition")               
+      	  and dat2exp (PAIRDAT (a,d1,d2)) =
+              (case d1 of
+                 SYMBDAT (_, "lambda") => dat2lambda (a,d2)
+               | SYMBDAT (_, "if") => dat2if (a,d2)
+               | SYMBDAT (_, "set!") => dat2assign (a,d2)
+               | SYMBDAT (_, "quote") => dat2quote (a,d2)
+               | _ => CALL (a, dat2exp d1, dat2args d2))
+            | dat2exp (SYMBDAT (a,s)) = VARIABLE (a, (s, varinit (a,s)))
+            | dat2exp d = LITERAL d
+          and dat2lambda (a, (PAIRDAT (_, f, (PAIRDAT (_, e, NILDAT _))))) =
+                 LAMBDA (a, dat2formals f, dat2exp e)
+            | dat2lambda _ = parseError ("Illegal lambda expression")
+          and dat2formals (SYMBDAT (a,s)) = 
+          	     if member s keywords
+          	     	then parseError ("Illegal parameter (keyword)")
+          	     else AVARPAR (s, parinit (a,s))
+            | dat2formals (PAIRDAT (a,d1,d2)) = 
+                 APAIRPAR (dat2par d1, dat2formals d2)
+            | dat2formals (NILDAT a) = ANULLPAR
+            | dat2formals _ = parseError ("Illegal formals")
+          and dat2par (SYMBDAT (a,s)) =
+                if member s keywords
+                    then parseError ("Illegal parameter (keyword)")
+                 else (s, parinit (a,s))
+            | dat2par _ = 
+                parseError ("Illegal parameter (not an identifier)")
+          and dat2if (a, (PAIRDAT (_, d1, PAIRDAT (_, d2, d3)))) =
+                IF (a, dat2exp d1, dat2exp d2, dat2else d3)
+            | dat2if _ = parseError ("Illegal if expression")
+          and dat2else (PAIRDAT (_, d, NILDAT _)) =
+                 dat2exp d
+            | dat2else (NILDAT a) = NOEXP a
+            | dat2else _ = parseError ("Illegal if expression (else)")
+          and dat2assign (a, (PAIRDAT (_,d1, PAIRDAT (_,d2, NILDAT _)))) =
+                 ASSIGN (a, dat2var d1, dat2exp d2)
+            | dat2assign _ = parseError ("Illegal assignment")
+
+          and dat2quote (a, PAIRDAT (_,d1, NILDAT _)) = 
+                 LITERAL d1 
+            | dat2quote _ = parseError ("Illegal quotation")
+          and dat2var (SYMBDAT (a,s)) = 
+                 if member s keywords 
+                    then parseError ("Illegal variable (keyword)")
+                 else (s, varinit (a,s))
+            | dat2var _ = parseError ("Illegal variable (not an identifier)")
+          and dat2args (PAIRDAT (a, d1, d2)) =
+                PAIRARG (a, dat2exp d1, dat2args d2)
+            | dat2args (NILDAT a) = NULLARG a
+            | dat2args _ = parseError ("Illegal argument list")
+      in
+      (dat2exp, dat2def, dat2program)
+      end
+
+  datatype ('a, 't, 'v) attinit =
+      INIT of { parameter: 'a * string -> 't,
+                variable: 'a * string -> 'v,
+                exp: unit -> 'a}
+                                    
+  fun read (INIT J) = 
+    let val (dat2exp, dat2def, dat2program) = 
+                 dat2ast (#parameter J, #variable J) 
+        val in2dat = read_datum (#exp J)
+    in (dat2exp o in2dat, dat2def o in2dat, dat2program o in2dat)
+    end
+
+  end
+end;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

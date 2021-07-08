@@ -1,7 +1,7 @@
   (* 11th stage: interpret coercions *)
   
   local
-  open Exp Type Coercion Datum General Constraint
+  open Exp Type PolyType Coercion Datum SchemeGeneral Constraint
   in
 
   datatype kexp =
@@ -15,12 +15,15 @@
     CONS of kexp * kexp |
     NIL |
     NOTHING |
-    IDENT of string |
+    IDENT of string * PPtype |
     FCALL of kexp * kexp |
     LAM of kexp * kexp |
     IFEXP of kexp * kexp * kexp |
     ASSIGNMENT of string * kexp |
     CAPP of (PPtype * PPtype) * kexp
+  
+  datatype kdef =
+    DEF of kexp * kexp
   
   local
   fun f3 F (c,x1,x2,x3) = CAPP (show_constraint c, F (x1,x2,x3))
@@ -42,7 +45,8 @@
   val Edisplay =
          EHOM { noexp = f0 NOTHING,
                 literal = apply_dhom Ddisplay,
-                variable = f1 (IDENT o #1),
+                variable = f1 (fn (s, TYPE t) => IDENT (s, show_type t)
+                                | (s, TSCHEME (C, t)) => IDENT (s, show_type t)),
                 call = f2 FCALL,
                 lambda = f2 LAM,
                 ifexp = f3 IFEXP,
@@ -54,7 +58,9 @@
                 anullpar = fn () => NIL 
               }
   in
-  val display = apply_ehom Edisplay
+  val display_exp = apply_ehom Edisplay
+  fun display_def (DEFINE ((s,t), ae)) = 
+  		DEF (PARAM (s, show_type t), display_exp ae)
   end 
 
   end
