@@ -26,7 +26,7 @@ structure General (*: SCHEMEGENERAL *) =
     | zip (a::r, a'::r') = (a,a')::zip (r,r')
     | zip (_, _) = error ("zip", "lists of different lengths")
 
-  fun foldappend ls = List.foldr op@ ls nil
+  fun foldappend ls = List.foldr op@ nil ls
 
   fun member x [] = false
     | member x (y::tl) = if x=y then true else (member x tl)

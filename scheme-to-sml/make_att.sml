@@ -42,8 +42,8 @@ in
 	let val t = tvar()
             val (es,Vs,Es,ts) = 
 		List.foldr (fn ((e,V,E,t), (es,Vs,Es,ts)) => (e::es, V@Vs, E@Es, t::ts))
-		     (map att_datum l)
 		     (nil,nil,nil,nil)
+		     (map att_datum l)
             val c = case ts of 
 		      nil => mk_coercion (vector (tvar()), t)
 		    | t'::tr => (app (fn t'' => union (t',t'')) tr;
