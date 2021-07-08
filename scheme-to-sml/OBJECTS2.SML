@@ -111,19 +111,19 @@ structure Type =
   	  			SIMPLE (tt, _) => upd ((tt, at), f)
   	  		  | TVAR _ => error ("upd", "Only simple types allowed (tvar)")
   	  		  | DYN _ => error ("upd", "Only simple types allowed (dyntype)") 
-          val init = fold upd bindings undef
+          val init = List.foldr upd undef bindings
   	  in
-  	  uref (DYN (fold upd_simple l init), make_attrib())
+  	  uref (DYN (List.foldr upd_simple init l), make_attrib())
   	  end
 
   fun summands f = 
-      fold (fn (tt, l) => 
+      List.foldr (fn (tt, l) => 
                let val potsummand = f tt
                in case utype potsummand of
       		        SIMPLE _ => potsummand :: l
       		      | TVAR _ => l
       		      | DYN _ => error ("summands", "Illegal summand (dyn type)")
-      		   end) type_tags nil 
+      		   end) nil type_tags
 
   (* find equiv representative of annotated type *)
 
@@ -155,7 +155,7 @@ structure Type =
         SIMPLE(tt, tlist) => SIM(tt, map (show (level-1)) tlist)
       | TVAR i            => TYVAR i 
       | DYN f             => DYNAMIC (map (show (level-1)) (summands f))
-    in show (!SML_NJ.Print.printDepth) t
+    in show 5 (* print depth *) t
     end
   end
 
