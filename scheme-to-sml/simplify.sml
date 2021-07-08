@@ -68,21 +68,21 @@ fun set_preds_succs c =
 			      None => ()
 			    | Some(c') => unifyS (t1, rng_type c'));
                            (case p2 of
-			      None => (preds2 := c :: (!preds2))
-			      Some(c') => let val t1' = dom_type c'
+                              None => (preds2 := c :: (!preds2))
+			    | Some(c') => let val t1' = dom_type c'
 		 		         in (union (c,c'); unifyS(t1,t1'))
 		                         end))
                        end
         | (TVAR, _) => let val succs1 = succs t1
 		           val preds1 = preds t1
 		           val s1 = lookup rng_type tc2 (!succs1)
-			   val p1 = lookup dom_type tc1 (!preds2)                      
+			   val p1 = lookup dom_type tc1 (!preds1)
 		       in ((case p1 of
 			      None => ()
 			    | Some(c') => unifyS (t2, dom_type c'));
                            (case s1 of
 			      None => (succs1 := c :: (!succs1))
-			      Some(c') => let val t2' = rng_type c'
+			    | Some(c') => let val t2' = rng_type c'
 		 		         in (union (c,c'); unifyS(t2,t2'))
 		                         end))
                        end
@@ -120,7 +120,7 @@ and unifyV (t1, t2) =
 	val succs2 = succs t2
 	val preds2 = preds t2
     in (link (t1,t2); 
-	succs2 := merge rng_type (!succs1, !succs2)
+	succs2 := merge rng_type (!succs1, !succs2);
         preds2 := merge dom_type (!preds1, !preds2))
     end
 
@@ -180,7 +180,7 @@ fun normE nil = nil
 	else (seen c := true;
 	      case !!c of
 		COERCE(_) => c :: normE r
-	      | _ => normE r
+	      | _ => normE r)
 in
 fun normalizeE E =
     (app init_coercion E; normE E)
@@ -241,11 +241,11 @@ and set_negC c =
 
 fun elim_nonneg tn =
          case !(preds tn) of
-	   nil => (link(tn, undef_type);
+	   nil => (link(tn, undef_tnode);
 		   app (fn c => link(c, nonexec_coercion)) (!(succs tn)))
 	 | [c] => if !(neg tn) then ()
 	          else let val t = dom_type c
-		       in (link(c, idc(t)); link(tn, t); set_coercions (!succs tn))
+		       in (link(c, idc(t)); link(tn, t); set_coercions (!(succs tn)))
 		       end
          | cs => (link(tn, dynamic);
 		  app (fn c => link(c, tag (type_tag (dom_type c)))) (!(preds tn));
@@ -254,8 +254,8 @@ and set_coercions nil = ()
   | set_coercions (c::r) = 
 	let val dom_type_c = dom_type c
 	    val rng_type_c = rng_type c
-	in (if type_tag dom_type_c = type_tag rng_type c
-	      then link (c, id(dom_type_c))
+	in (if type_tag (dom_type_c) = type_tag (rng_type_c)
+	      then link (c, idc dom_type_c)
 	    else link (c, error_coercion);
 	    set_coercions r)
         end
