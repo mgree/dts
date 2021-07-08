@@ -51,7 +51,7 @@
       in
       (AVARPAR (s, nt), make_env (s, TYPE nt))
       end
-  fun apairpar ((s:string, ()), (st, env)) = 
+  fun apairpar ((s:string, ()), (st, (env : (string, typescheme) env))) = 
       let val nt = new_typevar()
       in 
       if iskey s env
@@ -74,7 +74,7 @@
   in
   val make_attributes_exp = apply_ehom evar_hom
 
-  fun make_attributes_def (DEFINE ((s, ()), e)) Env =
+  fun make_attributes_def (DEFINE ((s, ()), e)) (Env : (string, typescheme) env) =
         let val nt = new_typevar()
             val Env' = extend(Env, s, TYPE nt)
         in DEFINE ((s, nt), make_attributes_exp e Env')
@@ -361,7 +361,7 @@ fun visit (node, componentreps) =
    case !color of
      WHITE => (color := GREY;
                let val succs = !(get #succs node)
-                   val comps = fold visit succs (node :: componentreps)
+                   val comps = List.foldr visit (node :: componentreps) succs
                in (color := BLACK; comps)
                end)
    | GREY => let val sccrepnode = sccrep node
@@ -409,22 +409,22 @@ fun initialize_sink at =
             | TVAR _ => get #pos at := true
 
 fun or_combine (env1, env2)
-	   = fold (fn (tt, env) => 
+	   = List.foldr (fn (tt, env) => 
 		if iskey tt env1 
 		   then extend (env, tt, lookup tt env1)
                 else if iskey tt env2
 	             then extend (env, tt, lookup tt env2)
                 else env)
-	        type_tags 
 		empty_env 
+	        type_tags 
 
 fun and_combine (env1, env2)
-	   = fold (fn (tt, env) => 
+	   = List.foldr (fn (tt, env) => 
 		if iskey tt env1 andalso iskey tt env2
 		   then extend (env, tt, lookup tt env1)
 	        else env)
+		empty_env
 	        type_tags 
-		empty_env 
 
 fun propagate_sources nil = ()
   | propagate_sources (at :: r) =
@@ -441,17 +441,17 @@ fun propagate_sources nil = ()
                     in collect empty_env envs
                     end;
 	               get #neg at :=
-			           exists (fn pt => !(get #neg pt)) (!(get #preds at)))
+			           List.exists (fn pt => !(get #neg pt)) (!(get #preds at)))
           val newsrcs =
-	         fold (fn (at, newsrcs) => 
+	         List.foldr (fn (at, newsrcs) => 
 			         let val numpreds = get #numpreds at
 			         in (numpreds := !numpreds - 1;
 			             if !numpreds = 0 
 			             then at::newsrcs
                          else newsrcs)
 		             end) 
-		         (!(get #succs at)) 
 		         r
+		         (!(get #succs at)) 
      in propagate_sources newsrcs
      end
 fun propagate_sinks nil = ()
@@ -460,21 +460,21 @@ fun propagate_sinks nil = ()
 		 	 if !(get #succs at) = nil
 	 		 then initialize_sink at
 	    	 else (get #sinks at := 
-				     fold (fn (pt, env) => or_combine (!(get #sinks pt), env))
-			    	      (!(get #succs at))
-			        	  empty_env;
+				     List.foldr (fn (pt, env) => or_combine (!(get #sinks pt), env))
+			        	  empty_env
+			    	          (!(get #succs at));
 	           	   get #pos at :=
-			      	 exists (fn st => !(get #pos st)) (!(get #succs at)))
+			      	 List.exists (fn st => !(get #pos st)) (!(get #succs at)))
           val newsnks =
-	        fold (fn (at, newsnks) => 
+	        List.foldr (fn (at, newsnks) => 
 			        let val numsuccs = get #numsuccs at
 	      			in (numsuccs := !numsuccs - 1;
 					    if !numsuccs = 0 
 			       		then at::newsnks
                         else newsnks)
 		            end) 
-		         (!(get #preds at)) 
 		         r
+		         (!(get #preds at)) 
        in propagate_sinks newsnks
        end
 
@@ -561,7 +561,7 @@ local
 val rec_counter = ref 0
 in
 fun new_name () =
-    "REC" ^ Int.string (!rec_counter) before rec_counter := !rec_counter + 1
+    "REC" ^ Int.toString (!rec_counter) before rec_counter := !rec_counter + 1
 end
 
 fun mark_rec_type t =

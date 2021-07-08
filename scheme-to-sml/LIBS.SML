@@ -108,7 +108,7 @@ structure Environment =
     | lookup s ((s',v)::r) = 
          if s = s' then v else lookup s r
 
-  fun iskey s e = (true before lookup s e) handle Lookup => false
+  fun iskey s e = (let val v = lookup s e in true end) handle Lookup => false
   
   fun keys e = 
       let fun keysacc sofar nil = sofar
