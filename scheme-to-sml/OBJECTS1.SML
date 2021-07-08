@@ -1,6 +1,8 @@
 structure Datum =
   struct
 
+  open TextIO
+
   datatype ('da, 'd) datum_hom =
       DHOM of { booldat: 'da * bool -> 'd,
                 chardat: 'da * string -> 'd,
@@ -65,18 +67,25 @@ structure Datum =
   exception ReadError of string * string
   exception EOF
 
+  fun lookahead1 ip =
+      let val next_char = lookahead ip
+      in case next_char of
+        NONE => ""
+      | SOME(c) => Char.toString c
+      end
+
   fun read_datum init ip = 
       let val read_so_far = ref ""
           fun read_error msg =
-              (input_line ip;
+              (inputLine ip;
                raise ReadError (msg, !read_so_far))
           fun get_next_char() =
-              let val next_char = input(ip,1)
+              let val next_char = inputN(ip,1)
               in
                  (read_so_far := !read_so_far ^ next_char; next_char)
               end
           fun get_identifier() =
-              let val next_char = lookahead ip 
+              let val next_char = lookahead1 ip 
               in case next_char of
                   "" => ""
                 | " " => ""
@@ -95,7 +104,7 @@ structure Datum =
                 | "\\" => get_next_char() ^ get_string() 
                 | _ => c ^ get_string()
               end
-          fun get_line() = input_line ip
+          fun get_line() = inputLine ip
           fun is_delimiter c = case c of
                                     ")" => true
                                |    "(" => true
@@ -130,11 +139,11 @@ structure Datum =
                 | ")" => RightParen
                 | "`" => QuasiquoteSym
                 | "'" => QuoteSym
-                | "." => if is_delimiter (lookahead ip) then DotSym
+                | "." => if is_delimiter (lookahead1 ip) then DotSym
                          else Identifier ("."^get_identifier())
                                
                             
-                | "," => if lookahead ip = "@" then (get_next_char(); UnqSplSym)
+                | "," => if lookahead1 ip = "@" then (get_next_char(); UnqSplSym)
                          else UnquoteSym
                 | "#" => (case get_next_char() of
                               "(" => VectorSym
@@ -147,11 +156,11 @@ structure Datum =
                                          else read_error "Illegal character constant"
                                       end
                             | c => (Identifier (c ^ get_identifier())))  (* Non-standard identifier *)
-                | "+" => let val lh = lookahead ip in
+                | "+" => let val lh = lookahead1 ip in
                              if lh = "." orelse is_digit lh then NumbSym (get_identifier())
                              else Identifier ("+"^get_identifier()) (* Non-standard identifier *)
                          end
-                | "-" => let val lh = lookahead ip in
+                | "-" => let val lh = lookahead1 ip in
                              if lh = "." orelse is_digit lh then NumbSym (get_identifier())
                              else Identifier ("-"^get_identifier())  (* Non-standard identifier *)
                          end
@@ -223,7 +232,7 @@ structure Datum =
          let val tok = get_next_token() in
              case tok of 
                   EndOfInput => raise EOF
-             |    _ => parse_datum(tok) (* before input_line ip *)
+             |    _ => parse_datum(tok) (* before inputLine ip *)
          end
       end
 
@@ -301,7 +310,7 @@ structure Exp =
       end
 
   exception ParseError of string
-  fun parseError s = (output(std_out, "Parse error: " ^ s); 
+  fun parseError s = (output(stdErr, "Parse error: " ^ s); 
   					  raise ParseError s)
  
   val keywords = ["lambda", "if", "set!", "quote", "define"]
