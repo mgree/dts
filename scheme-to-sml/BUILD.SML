@@ -10,10 +10,4 @@ use "CODEGEN.SML";
 use "TYPEDEF.SML";
 
 val _ = print_depth := 40;
-fun proc() = use "PROCESS.SML";
-open TextIO;
-output(stdOut, 
-       "Execute \"proc()\"  and input Scheme definition\n");
-
-
-
+use "PROCESS.SML";

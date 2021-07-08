@@ -1,6 +1,7 @@
 (* Do the whole process for definitions *)
 local
 open Constraint Type PolyType Environment SchemeGeneral Exp
+open TextIO
 val _ = print_depth := 5
 val ud = parse_def stdIn (* parse input stream into a preattributed definition *) 
 val ad = make_attributes_def ud topenv 
