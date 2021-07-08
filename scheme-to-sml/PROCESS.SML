@@ -1,8 +1,8 @@
 (* Do the whole process for definitions *)
 local
 open Constraint Type PolyType Environment SchemeGeneral Exp
-val _ = pd := 5
-val ud = parse_def std_in (* parse input stream into a preattributed definition *) 
+val _ = print_depth := 5
+val ud = parse_def stdIn (* parse input stream into a preattributed definition *) 
 val ad = make_attributes_def ud topenv 
 	     (* translate preattributed expression into attributed definition *)
 val ae = case ad of DEFINE (_, ae) => ae
@@ -11,7 +11,7 @@ val kd1 = display_def ad
 val t = unify_type_def ad (* unify types according to local equational type rules *)
 val C = get_constraint_def ad (* collect all constraints *)
 in
-val _ = pd := 20
+val _ = print_depth := 20
 val att_def = kd1
 val can_annot = display_def ad
 val constraints = show_constraints C

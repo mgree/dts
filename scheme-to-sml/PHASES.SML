@@ -72,7 +72,7 @@
                    pairarg = pairarg,
                    nullarg = nullarg}
   in
-  val make_attributes_exp = apply_ehom evar_hom
+  fun make_attributes_exp e = apply_ehom evar_hom e
 
   fun make_attributes_def (DEFINE ((s, ()), e)) (Env : (string, typescheme) env) =
         let val nt = new_typevar()
@@ -224,7 +224,7 @@ end;
   fun get_types_in_constraint (at1, at2) =
   	APPEND [get_types_in_type at1, get_types_in_type at2]
   in
-  val get_constraint_exp = apply_ehom constraints_hom
+  fun get_constraint_exp e = apply_ehom constraints_hom e
 
   fun get_constraint_def (DEFINE (tv, e)) = get_constraint_exp e
   
@@ -331,9 +331,9 @@ end;
 	        numsuccs_l := !numsuccs_l + 1)
            end
   in
-  val reset_pred_succs =
+  fun reset_pred_succs c =
       foreach (fn (t1,t2) => (get #preds t2 := nil; get #numpreds t2 := 0;
-			                  get #succs t1 := nil; get #numsuccs t1 := 0))
+			                  get #succs t1 := nil; get #numsuccs t1 := 0)) c
   val pred_succs = foreach pred_succ
   fun find_sources nil = nil
     | find_sources (t::r) =
@@ -383,7 +383,7 @@ fun make_acyclic C =
     (foreach (fn (t1,t2) => (visit (t1, []))) C;
      foreach (fn (t1,t2) => (union (t1, sccrep t1);
      			             union (t2, sccrep t2))) C)
-val reset_shade = foreach (fn t => get #color t := WHITE)
+fun reset_shade x = foreach (fn t => get #color t := WHITE) x
 end;
 
 (* 8th stage: Propagate sources and sinks: types that can be reached

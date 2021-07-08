@@ -4,7 +4,7 @@ fun type_def ip env =
 let
 open Constraint Type PolyType Environment SchemeGeneral Exp
 val ud = parse_def ip (* parse input stream into an preattributed definition *) 
-val ad = make_attributes_def ud env 
+val ad = make_attributes_def ud env
 		(* translate preattributed definition into attributed definition *)
 val t = unify_type_def ad (* unify types according to local equational type rules *)
 val C = get_constraint_def ad (* collect all constraints *)

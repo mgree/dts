@@ -155,7 +155,7 @@ structure Type =
         SIMPLE(tt, tlist) => SIM(tt, map (show (level-1)) tlist)
       | TVAR i            => TYVAR i 
       | DYN f             => DYNAMIC (map (show (level-1)) (summands f))
-    in show 5 (* print depth *) t
+    in show (!print_depth) t
     end
   end
 
