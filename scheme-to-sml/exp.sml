@@ -5,83 +5,86 @@ structure Exp (*: KERNELEXP *) =
 
   type 'v var = string * 'v
 
-  datatype 't formals =
-    AVARPAR of 't var |
-    APAIRPAR of 't var * 't formals |
-    ANULLPAR
+  datatype ('a, 'b, 'c) il =
+    CONS of 'b * ('a, 'b, 'c) ilist |
+    NIL |
+    OTHER of 'c
+  withtype ('a, 'b, 'c) ilist = ('a, 'b, 'c) il * 'a
 
-  datatype ('a, 't, 'v) uexp =
-    NOEXP |
+  datatype 't coercion =
+     CVAR of int
+   | IDC 
+   | TAG of 't
+   | CHECK of 't
+   | MAP of 't * 't coercion list
+   | COMP of 't coercion * 't coercion
+
+  datatype ('a, 'v, 't) exp =
     LITERAL of 'a datum |
     VARIABLE of 'v var |
-    CALL of ('a, 't, 'v) exp * ('a, 't, 'v) args |
-    LAMBDA of 't formals * ('a, 't, 'v) exp |
-    IF of ('a, 't, 'v) exp * ('a, 't, 'v) exp * ('a, 't, 'v) exp |  
-    ASSIGN of 'v var * ('a, 't, 'v) exp
-  and ('a, 't, 'v) uargs =
-    PAIRARG of ('a, 't, 'v) exp * ('a, 't, 'v) args |
-    NULLARG
-  withtype ('a, 't, 'v) exp = ('a, 't, 'v) uexp * 'a
-  and      ('a, 't, 'v) args = ('a, 't, 'v) uargs * 'a
+    CALL of ('a, 'v, 't) expression * ('a, ('a, 'v, 't) expression, unit) ilist |
+    LAMBDA of ('a, 'v var, 'v var) ilist * ('a, 'v, 't) body |
+    IF of ('a, 'v, 't) expression * ('a, 'v, 't) expression * ('a, 'v, 't) expression |  
+    ASSIGN of 'v var * ('a, 'v, 't) expression |
+    LET of ('a, 'v, 't) body |
+    APPLY of 't coercion * ('a, 'v, 't) expression |
+    NOEXP
+  withtype ('a, 'v, 't) expression = ('a, 'v, 't) exp * 'a
+  and ('a, 'v, 't) definitions = ('v var * ('a, 'v, 't) expression) list
+  and ('a, 'v, 't) body = ('a, 'v, 't) definitions * ('a, 'v, 't) expression
 
   exception ParseError of string
   
   val keywords = ["lambda", "if", "set!", "quote"]
         
   fun dat2exp (parinit, varinit) = 
-      let fun dat2e (PAIRDAT (d1,d2), a) =
+      let fun dat2e (PAIRDAT (a,d1,d2)) =
               (case d1 of
-                 (SYMBDAT "lambda", _) => dat2lambda (a,d2)
-               | (SYMBDAT "if", _) => dat2if (a,d2)
-               | (SYMBDAT "set!", _) => dat2assign (a,d2)
-               | (SYMBDAT "quote", _) => dat2quote (a,d2)
-               | _ => (CALL (dat2e d1, dat2args d2), a))
-            | dat2e (SYMBDAT s, a) = (VARIABLE (s, varinit (a,s)), a)
-            | dat2e (d as (ud,a)) = (LITERAL d, a)
-          and dat2lambda (a, (PAIRDAT (f, (PAIRDAT (e, (NILDAT, _)), _)), _)) =
-                 (LAMBDA (dat2formals nil f, dat2e e), a)
+                 SYMBDAT (_, "lambda") => dat2lambda (a,d2)
+               | SYMBDAT (_, "if") => dat2if (a,d2)
+               | SYMBDAT (_, "set!") => dat2assign (a,d2)
+               | SYMBDAT (_, "quote") => dat2quote (a,d2)
+               | _ => CALL (a, dat2e d1, dat2args d2))
+            | dat2e (SYMBDAT (a,s)) = VARIABLE (a, (s, varinit (a,s)))
+            | dat2e d = LITERAL d
+          and dat2lambda (a, (PAIRDAT (_, f, (PAIRDAT (_, e, NILDAT _))))) =
+                 LAMBDA (a, dat2formals f, dat2e e)
             | dat2lambda _ = raise ParseError ("Illegal lambda expression")
-          and dat2formals seen (SYMBDAT s, a) = 
+          and dat2formals (SYMBDAT (a,s)) = 
           	     if member s keywords
-          	     	then raise ParseError ("Illegal single/dot parameter (keyword)")
-                     else if member s seen
-                        then raise ParseError ("Duplicate single/dot parameter")
+          	     	then raise ParseError ("Illegal parameter (keyword)")
           	     else AVARPAR (s, parinit (a,s))
-            | dat2formals seen (PAIRDAT (d1,d2), _) = 
-		 let val par as (s, _) = dat2par seen d1
-                 in APAIRPAR (par, dat2formals (s::seen) d2)
-                 end
-            | dat2formals seen (NILDAT, a) = ANULLPAR
-            | dat2formals _ _ = raise ParseError ("Illegal formals")
-          and dat2par seen (SYMBDAT s, a) =
+            | dat2formals (PAIRDAT (a,d1,d2)) = 
+                 APAIRPAR (dat2par d1, dat2formals d2)
+            | dat2formals (NILDAT a) = ANULLPAR
+            | dat2formals _ = raise ParseError ("Illegal formals")
+          and dat2par (SYMBDAT (a,s)) =
                 if member s keywords
                     then raise ParseError ("Illegal parameter (keyword)")
-                else if member s seen
-                    then raise ParseError ("Duplicate parameter")
-                else (s, parinit (a,s))
-            | dat2par _ _ = 
+                 else (s, parinit (a,s))
+            | dat2par _ = 
                 raise ParseError ("Illegal parameter (not an identifier)")
-          and dat2if (a, (PAIRDAT (d1, (PAIRDAT (d2, d3), _)), _)) =
-                (IF (dat2e d1, dat2e d2, dat2else d3), a)
+          and dat2if (a, (PAIRDAT (_, d1, PAIRDAT (_, d2, d3)))) =
+                IF (a, dat2e d1, dat2e d2, dat2else d3)
             | dat2if _ = raise ParseError ("Illegal if expression")
-          and dat2else (PAIRDAT (d, (NILDAT, _)), _) =
+          and dat2else (PAIRDAT (_, d, NILDAT _)) =
                  dat2e d
-            | dat2else (NILDAT, a) = (NOEXP, a)
+            | dat2else (NILDAT a) = NOEXP a
             | dat2else _ = raise ParseError ("Illegal if expression (else)")
-          and dat2assign (a, (PAIRDAT (d1, (PAIRDAT (d2, (NILDAT, _)), _)), _)) =
-                 (ASSIGN (dat2var d1, dat2e d2), a)
+          and dat2assign (a, (PAIRDAT (_,d1, PAIRDAT (_,d2, NILDAT _)))) =
+                 ASSIGN (a, dat2var d1, dat2e d2)
             | dat2assign _ = raise ParseError ("Illegal assignment")
-          and dat2quote (a, (PAIRDAT (d1, (NILDAT, _)), _)) = 
-                 (LITERAL d1, dattrib d1)
+          and dat2quote (a, PAIRDAT (_,d1, NILDAT _)) = 
+                 LITERAL d1 
             | dat2quote _ = raise ParseError ("Illegal quotation")
-          and dat2var (SYMBDAT s, a) = 
+          and dat2var (SYMBDAT (a,s)) = 
                  if member s keywords 
                     then raise ParseError ("Illegal variable (keyword)")
                  else (s, varinit (a,s))
             | dat2var _ = raise ParseError ("Illegal variable (not an identifier)")
-          and dat2args (PAIRDAT (d1, d2), a) =
-                (PAIRARG (dat2e d1, dat2args d2), a)
-            | dat2args (NILDAT, a) = (NULLARG, a)
+          and dat2args (PAIRDAT (a, d1, d2)) =
+                PAIRARG (a, dat2e d1, dat2args d2)
+            | dat2args (NILDAT a) = NULLARG a
             | dat2args _ = raise ParseError ("Illegal argument list")
       in
       dat2e

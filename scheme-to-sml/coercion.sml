@@ -10,7 +10,7 @@ structure Coercion =
   fun lo_type (l, h) = l
   fun hi_type (l, h) = h
 
-  fun new_coercion_sig() = (mk_tvar(), mk_tvar())
+  fun new_coercion_sig() = (new_typevar(), new_typevar())
 
   datatype coercion =
      CVAR of int * atype * atype

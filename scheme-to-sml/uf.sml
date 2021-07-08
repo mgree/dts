@@ -1,17 +1,13 @@
 (*$UnionFind: UNIONFIND *)
 
-structure UnionFind: UNIONFIND =
+structure UnionFind (* : UNIONFIND *) =
 
-(* UNIONFIND DATA STRUCTURE WITH PATH HALVING AND RANKED UNION
+(* UNIONFIND DATA STRUCTURE WITH PATH COMPRESSION AND RANKED UNION
 
 Created by: Fritz Henglein, DIKU, University of Copenhagen (henglein@diku.dk)
 Date:       29 Dec 1994
 
 Maintenance: Author
-
-Comment:     This implementation of union/find was found to be the most
-	     efficient combination of implementations of the basic
-	     union and find operations
 
 RCS LOG
 
@@ -21,18 +17,18 @@ struct
 
   exception UnionFind of string
 
-  datatype 'a urefC = 
+  datatype 'a UFC = 
         ECR of 'a * int
-      | PTR of 'a uref
-  withtype 'a uref = 'a urefC ref
-
+      | PTR of 'a UF
+  withtype 'a UF = 'a UFC ref
 
   fun find (p as ref (ECR _)) = p
-    | find (p as ref (PTR (p' as ref (ECR _)))) = p'
-    | find (p as ref (PTR (p' as ref (PTR p'')))) =
-	(p := PTR p''; find p'')
+    | find (p as ref (PTR p')) =
+         let val p'' = find p'
+         in (p := PTR p''; p'')
+         end
 
-  fun uref x = ref (ECR (x, 0))
+  fun make x = ref (ECR (x, 0))
 
   fun !! p = 
       case !(find p) of
@@ -41,7 +37,7 @@ struct
       
   fun equal (p, p') = (find p = find p')
 
-  fun ::= (p, x) = 
+  fun op::= (p, x) = 
       let val p' = find p
       in case !p' of
            ECR (_, r) => (p' := ECR (x, r))
@@ -55,25 +51,6 @@ struct
 	    then ()
          else p' := PTR q
       end
-
-  fun union_with f (p, q) = 
-          let val p' = find p
-              val q' = find q
-          in (case (!p', !q') of
-               (ECR (pc, pr), ECR (qc, qr)) =>
-                  if p' = q' then
-                     p' := ECR (f(pc,pc), pr)
-                  else if pr = qr then 
-                     (p' := PTR q'; 
-                      q' := ECR (f(pc,qc), qr+1))
-                  else if pr < qr then 
-                     (p' := PTR q'; 
-                      q' := ECR (f(pc,qc), qr))                     
-                  else (* pr > qr *)
-                     (q':= PTR p';
-                      p' := ECR (f(pc,qc), pr))
-               | _ => raise UnionFind "union_with")
-          end
 
   fun union (p, q) = 
           let val p' = find p
@@ -92,4 +69,3 @@ struct
           end
 
 end
-

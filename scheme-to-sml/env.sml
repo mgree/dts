@@ -1,4 +1,4 @@
-structure Env =
+structure Environment =
   struct
 
   type 'a env = (string * 'a) list

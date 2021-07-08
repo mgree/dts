@@ -5,7 +5,7 @@
   fun nothing _ = ()
   val new_atts = INIT { parameter = nothing,
                        variable = nothing,
-                       exp = nothing }
+                       exp = new_coercion_sig }
                                                  
   val parse = read_exp new_atts
   end

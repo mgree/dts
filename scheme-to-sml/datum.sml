@@ -1,7 +1,7 @@
-structure Datum (*: SCHEMEDATUM *) =
+structure Datum =
   struct
 
-  datatype 'a udatum =
+  datatype 'a dat=
       BOOLDAT of bool |
       CHARDAT of string |
       STRIDAT of string |
@@ -9,11 +9,8 @@ structure Datum (*: SCHEMEDATUM *) =
       NUMBDAT of string |
       VECTDAT of 'a datum list |
       PAIRDAT of 'a datum * 'a datum |   
-      NILDAT 
-  withtype 'a datum = 'a udatum * 'a
-
-  fun dattrib (ud, a) = a
-
+      NILDAT
+  withtype 'a datum = 'a dat * 'a
 
   datatype token =
       Identifier of string
@@ -137,10 +134,10 @@ structure Datum (*: SCHEMEDATUM *) =
                 | c => Identifier (c ^ get_identifier())
               end
  
-          fun listdat [] = (NILDAT, init())
-            | listdat (d::r) = (PAIRDAT (d, listdat r), init())
+          fun listdat [] = NILDAT (init())
+            | listdat (d::r) = PAIRDAT (init(), d, listdat r)
 
-          fun make_datum DC s = (DC s, init())
+          fun make_datum DC s = DC (init(), s)
           fun parse_datum(tok) =
               (* parses the input stream with tok prepended as the 
                first token *)
@@ -151,7 +148,7 @@ structure Datum (*: SCHEMEDATUM *) =
                 | CharSym c => make_datum CHARDAT c
                 | QuotationMark => make_datum STRIDAT (get_string())
                 | LeftParen => parse_list()
-                | VectorSym => (VECTDAT (parse_vector()), init())
+                | VectorSym => VECTDAT (init(), parse_vector())
                 | QuoteSym => 
                       listdat [make_datum SYMBDAT "quote", 
                                parse_datum (get_next_token())]
@@ -168,19 +165,19 @@ structure Datum (*: SCHEMEDATUM *) =
           and parse_list() =
               let val tok = get_next_token()
               in if tok = RightParen 
-                    then (NILDAT, init())
-                 else (PAIRDAT (parse_datum(tok), parse_list_rem()), init())
+                    then NILDAT (init())
+                 else PAIRDAT (init(), parse_datum(tok), parse_list_rem())
               end
           and parse_list_rem() =
               let val tok = get_next_token()
               in case tok of
-                  RightParen => (NILDAT, init())
+                  RightParen => NILDAT (init())
                 | DotSym => let val pd = parse_datum(get_next_token())
                             in if get_next_token() = RightParen
                                    then pd
                                else read_error "Illegal input: ) expected"
                             end
-                | _ => (PAIRDAT (parse_datum(tok), parse_list_rem()), init())
+                | _ => PAIRDAT (init(),parse_datum(tok), parse_list_rem())
               end
           and parse_vector() =
               let val tok = get_next_token()
