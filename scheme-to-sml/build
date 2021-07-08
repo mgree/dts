@@ -1,0 +1,16 @@
+(* Build system *)
+
+use "general.sml"; open General;
+use "uf.sig"; 
+use "uf.sml"; (* open UnionFind; *)     
+use "env.sml"; (* open Environment; *)
+
+use "datum.sml"; (* open SchemeDatum; *)
+use "exp.sml"; (* open KernelExp; *)
+use "type.sml"; (* open SchemeTypes; *)
+
+use "make_att.sml"; 
+use "simplify.sml";
+
+use "constraint.sml";
+use "process.sml";
