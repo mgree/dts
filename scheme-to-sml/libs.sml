@@ -1,5 +1,7 @@
 (*$SchemeGeneral: SCHEMEGENERAL *)
 
+val print_depth = ref 5;
+
 structure SchemeGeneral (*: SCHEMEGENERAL *) = 
   struct
 

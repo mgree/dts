@@ -159,6 +159,34 @@ structure Type =
     end
   end
 
+  fun string_of_type_tag (FUNC)   = "func"
+    | string_of_type_tag (BOOL)   = "bool"
+    | string_of_type_tag (PAIR)   = "pair"
+    | string_of_type_tag (CHAR)   = "char"
+    | string_of_type_tag (SYMBOL) = "symbol"
+    | string_of_type_tag (STRING) = "string"
+    | string_of_type_tag (NUMBER) = "number"
+    | string_of_type_tag (VECTOR) = "vector"
+    | string_of_type_tag (LST)    = "lst"
+    | string_of_type_tag (UNSPEC) = "unspec"
+
+  val letters = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"]
+(*  fun string_of_tyvar (i) =
+      if i < 26
+      then (List.nth i letters)
+      else (List.nth i (letters % 26) ^ Int.toString (letters / 26))
+  end *)
+
+  fun string_of_type (SIM(tag,[]))        = string_of_type_tag tag
+    | string_of_type (SIM(tag,arg::args)) = string_of_type_tag tag ^
+                                            "(" ^ List.foldl (fn (t, s) => s ^ ", " ^ string_of_type t) (string_of_type arg) args ^ ")"
+    | string_of_type (DYNAMIC([]))        = "any" (* ??? it sems like DYNAMIC is meant to be a union *)
+    | string_of_type (DYNAMIC(opt::opts)) = List.foldl (fn (t, s) => string_of_type t ^ s) (string_of_type opt) opts
+    | string_of_type (TYVAR(i))           = "'a" ^ Int.toString i
+    | string_of_type (MORE)               = "..."
+
+  fun string_of_constraint (src,tgt) = string_of_type src ^ " ~> " ^ string_of_type tgt
+
 end;
 
 (*$SchemeCoercions: KernelTypes *)

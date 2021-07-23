@@ -1,25 +1,16 @@
-You can run this program by running `sml BUILD.SML`.
+Build the `dts` executable by running `make`. You'll need `mlton`.
 
 ```ShellSession
-$ echo '(define x 5)' | sml BUILD.SML
-...
-val poly_type = ([],SIM (NUMBER,[])) :
-  (Type.PPtype * Type.PPtype) list * Type.PPtype
-val it = () : unit
-- - 
+$ echo '(define x 5)' | ./dts
+number
 ```
 
 Look! It inferred that 5 is a number!
 
 ```ShellSession
-$ echo '(define (x n) 5)' |  sml BUILD.SML
-...
-val poly_type =
-  ([(TYVAR 44,SIM (LST,[TYVAR 43]))],
-   SIM (FUNC,[SIM (PAIR,[TYVAR 42,TYVAR 44]),SIM (NUMBER,[])])) :
-  (Type.PPtype * Type.PPtype) list * Type.PPtype
-val it = () : unit
-- - 
+$ echo '(define x (lambda (n) 5))' | ./dts
+forall 'a44 ~> lst('a43). func(pair('a42, 'a44), number)
+mgree@rocinante:~/dts/scheme-to-sml (mlton) $ 
 ```
 
 It inferred that `n` could have any type (I think?) and that the

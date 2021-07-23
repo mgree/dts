@@ -36,6 +36,12 @@ val coercion_params = coercion_parameters (aflatten [C])
 in
 val coercion_pars = map show_constraint coercion_params
 val poly_type = show_polytype (close (coercion_params, t))
+
+val _ = case poly_type of
+    ([], t) => TextIO.print (string_of_type t)
+  | (c::cs, t) => TextIO.print ("forall " ^ List.foldl (fn (c, s) => s ^ string_of_constraint c) (string_of_constraint c) cs ^ ". " ^ string_of_type t)
+val _ = TextIO.print "\n"  
+
 end
 end
 
